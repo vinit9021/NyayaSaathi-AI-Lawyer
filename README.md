@@ -3,14 +3,29 @@
 An Indian legal-information prototype limited to consumer shopping complaints
 and rental security-deposit disputes. **Not a licensed lawyer.**
 
-## Current status: Milestone 1 foundation
+## Current status: Milestone 2 sources and safety
 
 Implemented: package structure, validated configuration, provider-neutral LLM
 request/response/error contracts, injectable provider factory, and offline tests.
-`app.py` displays a foundation status message only. Legal retrieval, safety
-workflow, case extraction, chat, Gemini calls, speech, and drafting are **not
-implemented**. Their modules are explicit placeholders; the source catalogue is
-empty. There is no public deployment or live evaluation result yet.
+Milestone 2 adds curated-source validation/retrieval, conservative scope/risk
+screening, and fixed-text claim/citation enforcement. `app.py` still displays a
+foundation status message only. Case extraction, chat orchestration, Gemini
+calls, speech, and document drafting are **not implemented**. There is no public
+deployment or live model evaluation result yet.
+
+The catalogue has four active verified guidance sources (NCH grievance routing,
+NCH online-purchase guidance, NALSA referrals, and PIB model-tenancy context), one
+verified original statutory document held reference-only, and two inaccessible
+unverified candidates. No state-specific rental entitlement or statutory refund
+deadline is enabled. See [source coverage and safety behavior](sources/README.md)
+and the [actual verification log](sources/VERIFICATION_LOG.md).
+
+Retrieval filters topic, jurisdiction, verification, and review date before
+ranking tags. Claim output uses only approved English/Hindi text and stored URLs;
+invented IDs, altered claims, and irrelevant real citations fail closed. Unknown
+state law produces an explicit gap. High-risk/unsupported cases cannot pass the
+drafting guard. Local keyword screening is conservative and incomplete: later
+semantic confirmation is required before unlocking supported-case drafting.
 
 See [requirements](PROJECT_REQUIREMENTS.md), [architecture](ARCHITECTURE.md),
 [implementation plan](IMPLEMENTATION_PLAN.md), and [agent instructions](AGENTS.md).
@@ -104,7 +119,10 @@ Tests isolate configuration, use synthetic values, block outbound socket
 connections, mock Streamlit secrets/SDK constructors, and cover precedence,
 missing/invalid settings, safe errors, contract validation, and factory injection.
 They do not prove legal reasoning quality, transcription accuracy, or live
-provider availability. Later evaluation will save real synthetic-run outputs
+provider availability. New source/safety tests cover absent/unverified/stale
+sources, state filtering, multilingual screening, mixed risks, and fabricated
+claims/citations. Source content was researched separately; offline tests do not
+prove legal accuracy. Later evaluation will save real synthetic-run outputs
 separately; none are invented here.
 
 ## Privacy and repository hygiene
@@ -116,5 +134,5 @@ and stage exact file paths; ignore rules do not detect secrets inside source.
 
 The planned public free-tier demo is synthetic-only. No real case data should be
 submitted until provider terms/privacy controls are reviewed. The app will never
-send/file a complaint automatically. Next milestone: curated sources and safety;
-it is not part of this foundation implementation.
+send/file a complaint automatically. Next milestone: case intake and grounded
+text engine (Milestone 3). It has not been started.

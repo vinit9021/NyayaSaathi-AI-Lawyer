@@ -6,6 +6,7 @@ never be displayed as verified legal guidance without later safety validation.
 
 from dataclasses import dataclass, field
 from typing import Literal
+from datetime import date
 
 
 def require_text(value: object, label: str) -> None:
@@ -69,3 +70,81 @@ class LLMResponse:
         require_text(self.model, "Model identifier")
         if not isinstance(self.usage, TokenUsage):
             raise ValueError("Usage must be a TokenUsage object.")
+
+
+@dataclass(frozen=True)
+class CuratedClaim:
+    """Authored information, never unrestricted model prose."""
+
+    id: str
+    en: str
+    hi: str
+    kind: Literal["information", "referral", "statutory"]
+    required_facts: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class LegalSource:
+    id: str
+    title: str
+    url: str
+    authority: str
+    jurisdiction: str
+    topics: tuple[str, ...]
+    tags: tuple[str, ...]
+    scope: str
+    locator: str
+    summary: str
+    summary_sha256: str
+    verification: Literal["verified", "unverified"]
+    usage: Literal["active", "reference_only"]
+    checked_on: date
+    review_due: date
+    verification_note: str
+    limitations: str
+    claims: tuple[CuratedClaim, ...]
+
+
+@dataclass(frozen=True)
+class SourceMatch:
+    source: LegalSource
+    score: int
+    reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RetrievalResult:
+    matches: tuple[SourceMatch, ...]
+    gaps: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SafetyDecision:
+    topic: str
+    disposition: str
+    reasons: tuple[str, ...]
+    message: str
+
+    @property
+    def allow_drafting(self) -> bool:
+        return self.disposition == "supported"
+
+
+@dataclass(frozen=True)
+class GroundedClaim:
+    claim_id: str
+    source_id: str
+    kind: str
+    text: str
+    title: str
+    url: str
+    jurisdiction: str
+    locator: str
+    checked_on: date
+    limitations: str
+
+
+@dataclass(frozen=True)
+class ClaimDecision:
+    claims: tuple[GroundedClaim, ...]
+    gaps: tuple[str, ...]

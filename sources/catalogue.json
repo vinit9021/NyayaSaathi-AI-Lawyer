@@ -1,1 +1,217 @@
-[]
+[
+  {
+    "id": "nch_grievance",
+    "title": "National Consumer Helpline: grievance redressal",
+    "url": "https://consumerhelpline.gov.in/public/",
+    "authority": "Department of Consumer Affairs, Government of India",
+    "jurisdiction": "IN",
+    "topics": [
+      "consumer"
+    ],
+    "tags": [
+      "refund",
+      "defect",
+      "damage",
+      "non_delivery"
+    ],
+    "scope": "Consumer grievance routing only; no remedy entitlement.",
+    "locator": "How NCH Works, steps 1–4",
+    "summary": "Consumers can register grievances through NCH channels. NCH forwards grievances to the concerned entity; consumers can track responses.",
+    "verification": "verified",
+    "usage": "active",
+    "verification_note": "Opened the official HTML page and read the grievance journey on 2026-11-09.",
+    "limitations": "NCH routing does not guarantee a refund or replace legal proceedings.",
+    "claims": [
+      {
+        "id": "nch_route",
+        "en": "You can raise a consumer grievance through the National Consumer Helpline and track the response. This does not guarantee a refund.",
+        "hi": "आप राष्ट्रीय उपभोक्ता हेल्पलाइन पर शिकायत दर्ज करके जवाब देख सकते हैं। इससे रिफंड की गारंटी नहीं मिलती।",
+        "kind": "information",
+        "required_facts": []
+      }
+    ],
+    "summary_sha256": "79c4d2ea9ea6732a9a7c01223b9b83f4bd5bedbbf7bf8e681d06449ec5b54fe3",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  },
+  {
+    "id": "nch_online",
+    "title": "NCH knowledge base: Consumer Protection Act 2019",
+    "url": "https://consumerhelpline.gov.in/public/knowledgebasedetails/Consumer%20Protection%20Act%202019",
+    "authority": "Department of Consumer Affairs, Government of India",
+    "jurisdiction": "IN",
+    "topics": [
+      "consumer"
+    ],
+    "tags": [
+      "refund",
+      "defect",
+      "damage",
+      "non_delivery"
+    ],
+    "scope": "General online-purchase coverage only; not an individual eligibility determination.",
+    "locator": "Questions 3–4: consumer definition and exclusions",
+    "summary": "The guidance includes online transactions in consumer purchases. Resale/commercial-purpose exclusions and the self-employment livelihood qualification require care.",
+    "verification": "verified",
+    "usage": "active",
+    "verification_note": "Opened and read questions 3–4. Other FAQ sections were not approved for use.",
+    "limitations": "Official guidance is not a consolidated statute. Commission thresholds, filing portals, deadlines, and business-purchase eligibility are excluded from this record.",
+    "claims": [
+      {
+        "id": "online_coverage",
+        "en": "NCH guidance includes online purchases within consumer transactions. Whether a particular purchase qualifies needs attention to exclusions, including commercial purpose.",
+        "hi": "NCH की जानकारी में ऑनलाइन खरीद भी उपभोक्ता लेनदेन में शामिल है। किसी खरीद पर नियम लागू होने के लिए व्यावसायिक उद्देश्य जैसी सीमाएँ देखनी होंगी।",
+        "kind": "information",
+        "required_facts": []
+      }
+    ],
+    "summary_sha256": "1f30fe90b79eb79e7bff0bbc1e1b6164683d27c4156a15568743be977f5ebd54",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  },
+  {
+    "id": "nalsa_help",
+    "title": "NALSA: Legal Aid",
+    "url": "https://nalsa.gov.in/legal-aid/",
+    "authority": "National Legal Services Authority",
+    "jurisdiction": "IN",
+    "topics": [
+      "consumer",
+      "rental_deposit"
+    ],
+    "tags": [
+      "legal_help"
+    ],
+    "scope": "Qualified legal-help routing; eligibility is not assessed by this application.",
+    "locator": "Claiming Free Legal Aid / Application Procedure, question 1; eligibility FAQs",
+    "summary": "Depending on jurisdiction, applicants may approach the appropriate Taluk, District or State legal services institution. Legal-aid eligibility must be checked.",
+    "verification": "verified",
+    "usage": "active",
+    "verification_note": "Followed the Legal Aid link from the official homepage and read application-routing and eligibility sections.",
+    "limitations": "No promise of free representation, acceptance, response time, or case outcome.",
+    "claims": [
+      {
+        "id": "legal_help_route",
+        "en": "Ask the appropriate District or State Legal Services Authority about legal help and eligibility, or consult a qualified lawyer. Free legal aid is not guaranteed for every applicant.",
+        "hi": "उचित जिला या राज्य विधिक सेवा प्राधिकरण से कानूनी मदद और पात्रता पूछें, या योग्य वकील से सलाह लें। हर आवेदक को मुफ्त सहायता की गारंटी नहीं है।",
+        "kind": "referral",
+        "required_facts": []
+      }
+    ],
+    "summary_sha256": "21cabfffac15ad4475668c84322658eb294a6f626e458a693598aef4b0e78ca3",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  },
+  {
+    "id": "pib_model_tenancy",
+    "title": "PIB: Model Tenancy Act circulated for state/UT adoption",
+    "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1723636&reg=48&lang=2",
+    "authority": "Press Information Bureau, Government of India",
+    "jurisdiction": "IN",
+    "topics": [
+      "rental_deposit"
+    ],
+    "tags": [
+      "deposit",
+      "deduction"
+    ],
+    "scope": "Historical policy context only, not an enacted nationwide deposit rule.",
+    "locator": "Release 1723636, 2 June 2021, opening paragraph",
+    "summary": "The Cabinet approved circulation of the Model Tenancy Act to states and union territories for adaptation through new legislation or amendments.",
+    "verification": "verified",
+    "usage": "active",
+    "verification_note": "Read the release body at the final redirected URL. No state adoption or present statutory entitlement was verified.",
+    "limitations": "State enactment, applicability, deposit caps, refund periods, and lawful deductions require separate verification.",
+    "claims": [
+      {
+        "id": "rental_state_caution",
+        "en": "The Model Tenancy Act was circulated for state/UT adaptation. It is not evidence that one deposit rule applies everywhere; the applicable state law must be checked.",
+        "hi": "मॉडल किरायेदारी अधिनियम राज्यों और केंद्रशासित प्रदेशों में अपनाने के लिए भेजा गया था। इससे पूरे भारत में एक ही जमा-राशि नियम लागू होना सिद्ध नहीं होता; राज्य का कानून जाँचना होगा।",
+        "kind": "information",
+        "required_facts": []
+      }
+    ],
+    "summary_sha256": "093e8eb11b41a3ce8ab44b8f9a2ccfa40c4c00d550babfc5aa318d1c096fa3e2",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  },
+  {
+    "id": "ecommerce_original",
+    "title": "Consumer Protection (E-Commerce) Rules, 2020 — original notification",
+    "url": "https://consumeraffairs.gov.in/public/upload/files/E%20commerce%20rules_1732703966.pdf",
+    "authority": "Department of Consumer Affairs, Government of India",
+    "jurisdiction": "IN",
+    "topics": [
+      "consumer"
+    ],
+    "tags": [
+      "refund",
+      "defect",
+      "damage",
+      "non_delivery"
+    ],
+    "scope": "Original statutory text reviewed for research; disabled for claim output pending consolidated applicability review.",
+    "locator": "Printed page 10, rule 6(3); printed pages 8–9, rule 4",
+    "summary": "Original rule 6(3) addresses marketplace-seller returns/refunds for defective, deficient, misdescribed or late goods/services, including a force-majeure qualification for late delivery.",
+    "verification": "verified",
+    "usage": "reference_only",
+    "verification_note": "Opened the official 11-page PDF and read relevant English text. Later amendments are listed by the Department; this is not a consolidated current-law certification.",
+    "limitations": "No claim is enabled. Dates, seller model, amendments and case applicability need review. No automatic refund, deadline, or blanket non-delivery entitlement is inferred.",
+    "claims": [],
+    "summary_sha256": "57a3d57f429ff5d6fff7aedebea0a150975469c620a58bece0ae32f6388c9806",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  },
+  {
+    "id": "tn_tenancy_candidate",
+    "title": "Tamil Nadu tenancy Act 2017 — unverified candidate",
+    "url": "https://www.tenancy.tn.gov.in/Content/Documents/TNRRRLTact2017.pdf",
+    "authority": "Tamil Nadu tenancy portal",
+    "jurisdiction": "IN-TN",
+    "topics": [
+      "rental_deposit"
+    ],
+    "tags": [
+      "deposit",
+      "deduction"
+    ],
+    "scope": "Unverified state-legislation candidate; never evidence.",
+    "locator": "Not verified",
+    "summary": "No statutory content approved: the PDF could not be retrieved during this review.",
+    "verification": "unverified",
+    "usage": "reference_only",
+    "verification_note": "PDF fetch returned 502 Bad Gateway; portal fetch timed out. Search snippets were not accepted as verification.",
+    "limitations": "No deposit cap, refund deadline, section, or state entitlement is enabled.",
+    "claims": [],
+    "summary_sha256": "78089a1a56ca5f9c39e90e190a00de76e17af75a7fd84360f9efbb5a273e6107",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  },
+  {
+    "id": "indiacode_candidate",
+    "title": "India Code: Consumer Protection Act 2019 — unverified candidate",
+    "url": "https://www.indiacode.nic.in/bitstream/123456789/15256/1/eng201935.pdf",
+    "authority": "India Code",
+    "jurisdiction": "IN",
+    "topics": [
+      "consumer"
+    ],
+    "tags": [
+      "refund",
+      "defect",
+      "damage",
+      "non_delivery"
+    ],
+    "scope": "Unverified statutory candidate; never evidence.",
+    "locator": "Not verified",
+    "summary": "No statutory content approved: the PDF and associated Act page timed out during this review.",
+    "verification": "unverified",
+    "usage": "reference_only",
+    "verification_note": "Live opens failed with timeouts. No sections or statutory language were imported from search snippets.",
+    "limitations": "NCH's limited guidance record is separate; it does not make this inaccessible statute verified.",
+    "claims": [],
+    "summary_sha256": "ecd4703b53b230ed52677219f70ee2b7d6a2a0c730f601f62a3354870f06e52d",
+    "checked_on": "2026-11-09",
+    "review_due": "2027-02-07"
+  }
+]
