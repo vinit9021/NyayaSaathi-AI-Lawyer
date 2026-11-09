@@ -1,0 +1,5 @@
+# Direct runtime dependencies tested on Python 3.12; no platform-specific pins.
+streamlit==1.67.0
+google-genai==3.0.0
+groq==1.7.0
+python-dotenv==1.2.4

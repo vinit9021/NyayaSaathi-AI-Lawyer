@@ -32,6 +32,7 @@ dist/
 # Environment variables, secrets, and credentials
 .env
 .env.*
+!.env.example
 *.env
 .envrc
 .streamlit/secrets.toml

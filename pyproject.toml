@@ -1,0 +1,10 @@
+[project]
+name = "nyayasaathi"
+version = "0.1.0"
+description = "Foundation for a scoped Indian legal-information assistant"
+requires-python = ">=3.12,<3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = ["offline: does not access the network or live services"]
