@@ -83,8 +83,10 @@ never bypass the registry. Unseen inputs are not matched to canned case answers.
 Progress note: the user explicitly requested the text chat UI, confirmation editor,
 reset, and session-isolation tests during Milestone 3. Those parts were brought
 forward; editable drafts and their end-to-end safety checks remain Milestone 4.
-Milestone 3 Gemini validation is offline/mocked only. A live account-supported model
-must be configured and explicitly authorized before live evaluation.
+Milestone 3 initially used offline/mocked validation. Subsequent authorized live
+diagnostics verified gemini-3.5-flash-lite with one consumer workflow. The model
+omitted two structured details; verbatim retention fixes were validated offline
+against the unchanged response. Broad live evaluation remains Milestone 6 work.
 
 Build chat, preferred language, privacy notice, disclaimer, editable summary,
 evidence checklist, source display, and two plain-text draft templates. Add

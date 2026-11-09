@@ -89,6 +89,27 @@ def merge_proposals(state: CaseState, facts: tuple[CaseFact, ...]) -> CaseState:
     return replace(state, proposals=tuple(proposed.values()), conflicts=tuple(sorted(conflicts)))
 
 
+def preserve_intake_details(state: CaseState, facts: tuple[CaseFact, ...], text: str, turn: int) -> tuple[CaseFact, ...]:
+    """Keep short initial narratives and omitted communication statements verbatim.
+
+    This is loss prevention, not semantic fact invention. Every supplement is
+    an unconfirmed user assertion with an exact quote, still subject to review.
+    Long narratives remain in chat history instead of being silently truncated.
+    """
+    values = {f.name: f for f in facts}
+    existing = {f.name for f in state.facts + state.proposals}
+    if "problem" not in existing and len(text) <= 500:
+        values["problem"] = CaseFact("problem", text, text, turn)
+    if "contact_attempts" not in existing and "contact_attempts" not in values:
+        sentences = re.split(r"(?<=[.!?।])\s+|\n+", text)
+        pattern = r"\b(?:refused|declined|contacted|emailed|replied|responded)\b|मना|संपर्क|जवाब|\bmana kiya\b"
+        matches = [s.strip() for s in sentences if re.search(pattern, s, re.I)]
+        if len(matches) == 1 and len(matches[0]) <= 500:
+            quote = matches[0]
+            values["contact_attempts"] = CaseFact("contact_attempts", quote, quote, turn)
+    return tuple(values.values())
+
+
 def validate_confirmed_value(name: str, value: str | None) -> None:
     if name not in CASE_FIELDS:
         raise ValueError("Unknown case field.")

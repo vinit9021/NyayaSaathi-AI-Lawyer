@@ -35,7 +35,7 @@ class Settings:
             if value is not None and (not isinstance(value, str) or not value.strip()):
                 raise ConfigurationError(f"{name.upper()} must be non-empty text or unset.")
         for name, lower, upper in (
-            ("llm_timeout_seconds", 1, 30),
+            ("llm_timeout_seconds", 1, 90),
             ("llm_max_retries", 0, 1),
             ("llm_max_output_tokens", 1, 8192),
         ):

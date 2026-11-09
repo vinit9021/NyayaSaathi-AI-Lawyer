@@ -85,9 +85,12 @@ changes to UI, extraction, retrieval, safety, or drafting. Do not claim arbitrar
 vendors work without an adapter and contract tests.
 
 Normalize missing credentials, auth failure, quota exhaustion, timeout,
-unavailability, and invalid response into safe errors. Initial bounds: 30-second
-request timeout, at most one transient retry with backoff; do not retry auth or
-exhausted daily quotas. Never hide a provider outage behind a fake AI answer.
+unavailability, and invalid response into safe errors. Default timeout: 30 seconds,
+configurable up to 90 following live diagnostics; at most one transient retry
+with exponential backoff and jitter. Respect provider delay guidance; waits over
+30 seconds stop rather than retry early. Retry 429 only with retry guidance and
+no detected daily/zero/spend/unknown quota violation. Never retry authentication
+or invalid requests. SDK retries remain disabled. Never hide a provider outage behind a fake AI answer.
 Fallback may offer static scope information or show existing facts, clearly
 labelled. Missing Groq credentials disable voice but not text; missing Gemini
 credentials leave the UI usable with an explicit setup message.

@@ -1,0 +1,11 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "started_utc": "2026-11-09T18:44:25.966452+00:00",
+  "synthetic_input": "I purchased a mixer grinder from FictionalShop for INR 3500. It arrived damaged. I have the invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+  "raw_response": "{\"topic\":\"consumer\",\"confidence\":1.0,\"risk_flags\":[],\"facts\":[{\"name\":\"problem\",\"value\":\"damaged\",\"quote\":\"arrived damaged\"},{\"name\":\"seller\",\"value\":\"FictionalShop\",\"quote\":\"FictionalShop\"},{\"name\":\"amount_paid\",\"value\":\"INR 3500\",\"quote\":\"INR 3500\"},{\"name\":\"evidence\",\"value\":\"invoice and photos\",\"quote\":\"invoice and photos\"},{\"name\":\"state\",\"value\":\"Maharashtra\",\"quote\":\"Maharashtra\"},{\"name\":\"desired_outcome\",\"value\":\"money back\",\"quote\":\"want my money back\"}]}",
+  "usage": {
+    "input_tokens": 304,
+    "output_tokens": 121
+  },
+  "elapsed_seconds": 7.139
+}

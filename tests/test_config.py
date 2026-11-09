@@ -22,6 +22,11 @@ def test_defaults_need_no_keys():
         settings.require_groq()
 
 
+@pytest.mark.parametrize("timeout", [30, 60, 90])
+def test_supported_timeout_bounds(timeout):
+    assert load_settings(environ={"LLM_TIMEOUT_SECONDS": str(timeout)}).llm_timeout_seconds == timeout
+
+
 def test_precedence_and_no_process_mutation(tmp_path):
     path = tmp_path / ".env"
     path.write_text("GEMINI_API_KEY=synthetic-dotenv\nGEMINI_MODEL=local-model\nGROQ_API_KEY=synthetic-voice\n", encoding="utf-8")
@@ -54,7 +59,7 @@ def test_dotenv_is_opt_in_and_not_interpolated(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("name,value", [
-    ("LLM_TIMEOUT_SECONDS", "0"), ("LLM_TIMEOUT_SECONDS", "31"),
+    ("LLM_TIMEOUT_SECONDS", "0"), ("LLM_TIMEOUT_SECONDS", "91"),
     ("LLM_TIMEOUT_SECONDS", "not-a-number"), ("LLM_MAX_RETRIES", "2"),
     ("LLM_MAX_RETRIES", "-1"), ("LLM_MAX_OUTPUT_TOKENS", "0"),
     ("LLM_MAX_OUTPUT_TOKENS", "8193"), ("LLM_PROVIDER", ""),

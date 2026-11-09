@@ -4,7 +4,7 @@ from dataclasses import asdict, replace
 from datetime import date
 import json
 
-from nyayasaathi.extraction import EXTRACTION_SCHEMA, merge_proposals, parse_extraction
+from nyayasaathi.extraction import EXTRACTION_SCHEMA, merge_proposals, parse_extraction, preserve_intake_details
 from nyayasaathi.llm.base import LLMClient, LLMError, LLMErrorCode
 from nyayasaathi.models import CaseState, LegalSource, LLMRequest, Message, SafetyDecision, TurnResult
 from nyayasaathi.retrieval import retrieve
@@ -44,6 +44,8 @@ Extract only facts stated in the CURRENT message, including corrections. Copy va
 verbatim quote in that message, never normalize dates/money, infer state from city, or invent facts.
 Use null only where the user explicitly says a field is unknown/unavailable. Omit unstated fields.
 Existing confirmed/proposed facts are context, not new evidence. Return only the requested JSON schema.
+Include the product and what happened in problem; include seller replies/refusals in contact_attempts.
+Capture every stated evidence item. Do not omit a stated detail merely because another field overlaps it.
 """
 
 
@@ -163,7 +165,8 @@ def process_turn(state: CaseState, text: str, submission_id: str, client: LLMCli
         result = TurnResult("This appears to be a different dispute. Please start a new case.",
                             SafetyDecision("unclear", "clarify", ("topic_change",), "New case required"))
         return _finish(state, text, submission_id, result)
-    updated = merge_proposals(replace(state, topic=decision.topic), extraction.facts)
+    facts = preserve_intake_details(state, extraction.facts, text, len(state.processed_ids) + 1)
+    updated = merge_proposals(replace(state, topic=decision.topic), facts)
     confirmed = {f.name: f.value for f in updated.facts}
     jurisdiction = confirmed.get("state") if "state" not in updated.conflicts else None
     retrieved = retrieve(catalogue, topic=updated.topic, state=jurisdiction, text=text, as_of=as_of)

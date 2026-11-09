@@ -20,7 +20,7 @@ _MESSAGES = {
     LLMErrorCode.AUTHENTICATION: "Provider authentication failed. Check private settings.",
     LLMErrorCode.QUOTA: "Provider quota is unavailable. Check usage before trying again.",
     LLMErrorCode.TIMEOUT: "The model request timed out. Please try again later.",
-    LLMErrorCode.UNAVAILABLE: "The model provider is unavailable or not integrated yet.",
+    LLMErrorCode.UNAVAILABLE: "The model service is temporarily unavailable. Please try again later; your recorded facts remain intact.",
     LLMErrorCode.INVALID_RESPONSE: "The model returned an invalid response. Please try again.",
 }
 
