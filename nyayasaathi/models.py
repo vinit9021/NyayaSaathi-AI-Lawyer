@@ -161,6 +161,8 @@ CASE_FIELDS = (
     "problem", "seller", "city", "state", "amount_paid", "refund_amount",
     "purchase_date", "delivery_date", "evidence", "contact_attempts", "desired_outcome",
     "deposit_paid", "deposit_returned", "move_out_date", "deductions", "agreement",
+    "sender_name", "sender_contact", "recipient_contact", "product", "order_reference",
+    "landlord", "rental_property", "agreement_date",
 )
 
 
@@ -217,6 +219,7 @@ class CaseState:
     processed_ids: tuple[str, ...] = ()
     blocked: SafetyDecision | None = None
     last_result: TurnResult | None = field(default=None, repr=False)
+    assessment: SafetyDecision | None = None
 
     def __post_init__(self):
         if self.language not in {"en", "hi"} or self.topic not in {"consumer", "rental_deposit", "unclear", "unsupported"}:

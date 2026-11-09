@@ -1,7 +1,7 @@
 # NyayaSaathi implementation plan
 
-Planning only. No commands below install or run anything until implementation is
-authorized. PROJECT_REQUIREMENTS.md defines scope; ARCHITECTURE.md defines module
+Progress: Milestones 1–4 implemented; Milestones 5–7 remain planned. Commands below
+document the roadmap and executed checks. PROJECT_REQUIREMENTS.md defines scope; ARCHITECTURE.md defines module
 boundaries. Complete a narrow vertical slice before polishing the UI.
 
 ## Starting point and time budget
@@ -80,9 +80,13 @@ never bypass the registry. Unseen inputs are not matched to canned case answers.
 
 ### 4. Streamlit text UI and editable drafts (about 60 minutes)
 
-Progress note: the user explicitly requested the text chat UI, confirmation editor,
-reset, and session-isolation tests during Milestone 3. Those parts were brought
-forward; editable drafts and their end-to-end safety checks remain Milestone 4.
+Completed: concise chat, expandable reviewed sources, compact case summary,
+atomic bulk confirmation/corrections, and two editable neutral request templates.
+Drafts use only confirmed statements/placeholders, preserve review notices,
+block unsafe/conflicting cases and stale downloads, and export UTF-8 text only.
+Offline tests exercise consumer/rental journeys, edits, reruns, isolation, reset,
+missing facts/sources, injection, unsupported legal claims, and download contents.
+The text-chat foundation was brought forward during Milestone 3 by user request.
 Milestone 3 initially used offline/mocked validation. Subsequent authorized live
 diagnostics verified gemini-3.5-flash-lite with one consumer workflow. The model
 omitted two structured details; verbatim retention fixes were validated offline

@@ -74,9 +74,10 @@ protection. Milestone 3 supplies a structured semantic scope/risk assessment;
 Orchestration preserves risk flags and screens retained context, not only the latest text.
 Oversized input must be bounded without dropping risk evidence.
 
-`require_drafting_allowed()` is a guard for the future drafting module, not a
-document generator. Future integration must call it; this milestone does not
-implement or test a full conversation-to-draft workflow.
+`require_drafting_allowed()` gates Milestone 4's deterministic drafting module.
+Generation and export recheck the retained semantic decision, local risk signals
+and conflicts. Drafts are neutral user-reviewed requests without legal claims;
+catalogue claims remain separate in the expandable legal-information section.
 
 `ground_claims()` renders only a requested claim ID's fixed reviewed text, kind,
 stored source URL, locator, date, and limitations. It rechecks eligibility rather
@@ -97,7 +98,7 @@ Supported routing: online refunds, defective/damaged products and non-delivery;
 rental deposit withholding/disputed deductions with state-law uncertainty.
 No refund entitlement, deadline, deposit cap, deduction legality, court outcome,
 or case law is approved. Milestone 3 supports rental facts and conversational
-follow-ups; neutral drafting remains future work. No state-specific law is active.
+follow-ups; Milestone 4 adds neutral editable requests. No state-specific law is active.
 
 Criminal defence, divorce/custody, complex property litigation, representation,
 urgent proceedings, physical danger, and other high-risk matters escalate to

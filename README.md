@@ -2,9 +2,9 @@
 
 Legal-information prototype for online shopping complaints and rental security-deposit disputes. **Not a licensed lawyer. Fictional cases only.**
 
-## Milestone 3 status
+## Milestone 4 status
 
-Implemented: text chat, English/Hindi responses, English/Hindi/Hinglish intake through structured extraction, session context, editable facts, focused follow-ups, evidence checklists, and source-backed practical information. The user explicitly brought text UI work forward from Milestone 4. No voice, document generation, or public deployment is claimed. One synthetic live consumer workflow has now been exercised; this is not a broad model-quality evaluation.
+Implemented: text chat, English/Hindi responses, English/Hindi/Hinglish intake through structured extraction, session context, bulk fact review, short follow-ups, evidence checklists, expandable source-backed information, and two editable text-document workflows. No voice or public deployment is claimed. One synthetic live consumer workflow was exercised before Milestone 4; this is not a broad model-quality evaluation. Milestone 4 testing is entirely offline; no new live API calls or dependencies were needed.
 
 Gemini returns classification and proposed facts, never unrestricted legal prose. Extracted values must appear in verbatim current-message quotes. Users explicitly confirm or correct proposals; confirmation records an assertion, not independent proof. Conflicting details preserve prior confirmed values until reviewed. Missing details remain unknown.
 
@@ -32,9 +32,22 @@ Select **Offline simulation**. No keys or network are needed. Its prominent labe
 online refund; seller: FictionalShop; amount_paid: 5000; state: Maharashtra
 ```
 
-Then `purchase_date: 2026-10-01; desired_outcome: refund`. Review and confirm details in the expandable editor. Dates require YYYY-MM-DD; INR amounts require digits without commas. Select “I do not know” for unknown facts. Rental example: `landlord deposit; deposit_paid: 20000; state: Maharashtra`.
+Then `purchase_date: 2026-10-01; desired_outcome: refund`. Open **Review all details**, edit the fields together, and click **Confirm entered details** once. Dates require YYYY-MM-DD; INR amounts require digits without commas. Use the field's **Unknown** checkbox to explicitly clear a value. Blank untouched fields stay absent. Rental example: `landlord deposit; deposit_paid: 20000; state: Maharashtra`.
 
 Simulation language understanding is limited. Natural-language Hindi/Hinglish fixtures exercise the engine, but do not establish real Gemini quality. No provider error silently switches to simulation.
+
+### Review and download a draft
+
+1. Describe a fictional supported case. Chat asks at most two follow-ups at a time; detailed claims and citations are under **Legal information and sources**.
+2. Review the compact case summary. **Missing** means absent/unknown; **Awaiting confirmation** means information was supplied but not yet approved by you. Resolve conflicts in the bulk form; prior confirmed values remain protected until you submit corrections.
+3. Confirm the details to use. Optional name/contact, seller or landlord, product/order reference, rental property and agreement date can be entered in the same form. Do not use real private identifiers in this prototype.
+4. Click **Generate / regenerate draft**. Choose the dispute by describing it in chat; the correct template follows the assessed case topic. Consumer drafts address the seller/platform and request a refund/resolution. Rental drafts request deposit repayment or a written, itemized explanation.
+5. Review important missing fields and all `[Please provide: ...]` placeholders. Partial drafts can be downloaded, but must be completed and checked before use. Unconfirmed information is never silently promoted into the letter.
+6. Edit the draft, open **Preview**, acknowledge review, and click **Download text**. Downloads are UTF-8 `.txt`; no PDF dependency, automatic sending, filing, or emailing. A non-removable export notice identifies unverified statements and user responsibility.
+
+Edits stay in the current session and do not alter confirmed facts. Editing requires fresh review; changing the case disables the old download until you explicitly regenerate. Regeneration replaces draft edits. New case and provider-mode changes clear both facts and drafts. Separate sessions do not share them. Draft templates are in English with bilingual field labels; your statements retain their original language. Full Hindi document composition is not claimed.
+
+Drafting requires a successful scope/safety assessment. Unsupported/urgent matters, unresolved conflicts, injection attempts and detected legal claims are blocked. The conservative text screen may also reject ordinary wording such as a fixed number of days or risk-related words; it cannot certify every possible user edit. No statute, deadline, judgment, guarantee, legal threat or state-specific entitlement is generated. Missing legal sources still permit neutral factual requests, not verified legal advice. Confirmation means the user affirmed a statement, not that evidence or legal rights were independently verified.
 
 ### Real Gemini mode
 
@@ -73,6 +86,7 @@ Memory is session-only: at most 20 submissions and 40 retained messages, plus fa
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_extraction.py tests/test_conversation.py tests/test_llm.py -q
 .\.venv\Scripts\python.exe -m pytest tests/test_ui.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_drafting.py tests/test_ui.py -q
 .\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe -m compileall -q app.py nyayasaathi tests
 .\.venv\Scripts\python.exe -m pip check
@@ -86,4 +100,4 @@ Runtime direct dependencies remain pinned; Pytest is in `requirements-dev.txt`. 
 
 Never commit credentials, private cases, evidence, audio or assignment PDFs. Secrets, virtual environments, private-data directories, caches and PDFs remain ignored; only `.env.example` is exempted. Stage exact paths.
 
-See [requirements](PROJECT_REQUIREMENTS.md), [architecture](ARCHITECTURE.md), [plan](IMPLEMENTATION_PLAN.md), and [agent instructions](AGENTS.md). Next: **Milestone 4 — Streamlit text UI and editable drafts**. Text chat is already implemented by request; drafting and its safety checks remain.
+See [requirements](PROJECT_REQUIREMENTS.md), [architecture](ARCHITECTURE.md), [plan](IMPLEMENTATION_PLAN.md), and [agent instructions](AGENTS.md). Next: **Milestone 5 — Voice and failure handling**. It has not started.

@@ -1,5 +1,4 @@
-"""Text intake UI explicitly requested in milestone 3. No audio or drafting."""
-
+"""Session-local text intake, bulk review, and editable neutral request drafts."""
 from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
@@ -7,131 +6,190 @@ from uuid import uuid4
 import streamlit as st
 
 from nyayasaathi.config import ConfigurationError, Settings, load_streamlit_settings
-from nyayasaathi.conversation import FIELDS, evidence_checklist, localize, missing_fields, process_turn
-from nyayasaathi.extraction import confirm_fact
+from nyayasaathi.conversation import FIELDS, OPTIONAL_FIELDS, evidence_checklist, localize, unanswered_fields
+from nyayasaathi.conversation import process_turn
+from nyayasaathi.extraction import confirm_facts
 from nyayasaathi.llm.factory import create_llm_client
 from nyayasaathi.models import CaseState
-from nyayasaathi.retrieval import CatalogueError, load_catalogue
+from nyayasaathi.retrieval import CatalogueError, load_catalogue, retrieve
+from nyayasaathi.safety import ground_claims
+from nyayasaathi.drafting import LABELS, NOTICE, create_draft, download_bytes, fingerprint, require_safe_case
 
 ROOT = Path(__file__).resolve().parent
-LABELS = {
-    "problem": "Problem / समस्या", "seller": "Seller / विक्रेता", "city": "City / शहर",
-    "state": "State / राज्य", "amount_paid": "Amount paid / भुगतान", "refund_amount": "Refund sought / माँगा गया रिफंड",
-    "purchase_date": "Purchase date / खरीद की तारीख", "delivery_date": "Delivery date / डिलीवरी तारीख",
-    "evidence": "Evidence described / बताए गए सबूत", "contact_attempts": "Contact history / संपर्क का विवरण",
-    "desired_outcome": "Desired outcome / अपेक्षित समाधान", "deposit_paid": "Deposit paid / जमा राशि",
-    "deposit_returned": "Deposit returned / लौटी जमा राशि", "move_out_date": "Move-out date / मकान छोड़ने की तारीख",
-    "deductions": "Deductions / कटौतियाँ", "agreement": "Agreement terms / समझौते की शर्तें",
-}
 
 
-def reset_case(language: str) -> None:
+def reset_case(language):
     for key in list(st.session_state):
-        if key.startswith("fact_") or key in {"case", "live_consent"}:
+        if key.startswith(('fact_', 'draft_')) or key in {'case', 'live_consent'}:
             del st.session_state[key]
     st.session_state.case = CaseState(language=language)
 
 
-def main() -> None:
-    st.set_page_config(page_title="NyayaSaathi", page_icon="⚖️")
-    st.title("NyayaSaathi")
-    preference = st.selectbox("Response language / जवाब की भाषा", ["English", "हिन्दी"], key="language")
-    language = "hi" if preference == "हिन्दी" else "en"
-    st.caption(localize(
-        "AI legal-information assistant, not a licensed lawyer. Information may be incomplete or outdated. Consult a qualified lawyer for advice or urgent matters.",
-        "यह AI कानूनी-जानकारी सहायक है, लाइसेंस प्राप्त वकील नहीं। जानकारी अधूरी या पुरानी हो सकती है। सलाह या तात्कालिक मामलों के लिए योग्य वकील से मिलें।", language))
-    st.caption(localize("For online shopping complaints and rental deposits only. Synthetic examples only; do not enter real private case details.",
-                        "केवल ऑनलाइन खरीद और किराये की जमा राशि के मामले। काल्पनिक उदाहरण ही दें; वास्तविक निजी जानकारी न दें।", language))
-    mode = st.selectbox("Mode / तरीका", ["Choose mode", "Offline simulation", "Gemini"], key="mode")
-    if st.session_state.get("active_mode") != mode:
+def render_sources(state, catalogue):
+    with st.expander('Legal information and sources / कानूनी जानकारी और स्रोत'):
+        if state.blocked or not state.assessment or not state.assessment.allow_drafting:
+            st.info('Legal options are unavailable until scope and safety checks pass.')
+            return
+        values = {f.name: f.value for f in state.facts}
+        jurisdiction = values.get('state') if 'state' not in state.conflicts else None
+        retrieved = retrieve(catalogue, topic=state.topic, state=jurisdiction,
+                             text=' '.join(f.value or '' for f in state.facts + state.proposals))
+        sources = tuple(m.source for m in retrieved.matches)
+        claims = ground_claims(sources, state.assessment,
+                               tuple(c.id for s in sources for c in s.claims if c.kind != 'statutory'),
+                               state=jurisdiction, language=state.language)
+        if retrieved.gaps or claims.gaps:
+            st.warning('Legal position not verified. No statutory entitlement or deadline is established. / कानूनी अधिकार सत्यापित नहीं हैं।')
+        for claim in claims.claims:
+            st.markdown(claim.text)
+            st.markdown(f'[{claim.title}]({claim.url})')
+            st.caption(f'{claim.locator} • checked {claim.checked_on} • {claim.limitations}')
+
+
+def render_review(state):
+    with st.expander('Review all details / सभी जानकारी जाँचें', expanded=bool(state.proposals)):
+        st.caption('Edit together, then confirm once. Confirmation records your statements, not proof. Dates: YYYY-MM-DD; INR amounts: digits without commas.')
+        revision = fingerprint(state)[:16]
+        current = {f.name: f for f in state.facts + state.proposals}
+        with st.form('fact_review'):
+            columns = st.columns(2)
+            inputs = {}
+            for index, name in enumerate(FIELDS[state.topic] + OPTIONAL_FIELDS[state.topic]):
+                fact = current.get(name)
+                key = f'fact_{state.case_id}_{revision}_{name}'
+                with columns[index % 2]:
+                    if name in state.conflicts:
+                        previous = next((f.value for f in state.facts if f.name == name), None)
+                        st.caption('Previously confirmed / पिछली पुष्टि: ' + (previous or 'Unknown / अज्ञात'))
+                    entered = st.text_area(LABELS[name], value=(fact.value or '') if fact else '',
+                                           key=key, max_chars=500, height=68)
+                    unknown = st.checkbox('Unknown / अज्ञात — ' + LABELS[name],
+                                          value=bool(fact and fact.value is None), key=key + '_unknown')
+                    if unknown or entered.strip():
+                        inputs[name] = None if unknown else entered.strip()
+            submitted = st.form_submit_button('Confirm entered details / दर्ज जानकारी की पुष्टि', disabled=state.blocked is not None)
+        if submitted:
+            try:
+                st.session_state.case = confirm_facts(state, inputs)
+                st.rerun()
+            except ValueError as error:
+                st.warning(str(error))
+
+
+def render_draft(state):
+    st.subheader('Document draft / दस्तावेज़ मसौदा')
+    st.caption('Template-based, not advocate-approved. Only confirmed statements are used. Nothing is sent or filed. / केवल पुष्टि की गई जानकारी से मसौदा; कुछ भेजा नहीं जाएगा।')
+    try:
+        require_safe_case(state)
+    except ValueError as error:
+        st.info(str(error))
+        return
+    if st.button('Generate / regenerate draft / मसौदा बनाएँ', key='draft_generate'):
+        st.session_state.draft_document = create_draft(state)
+        st.session_state.draft_text = st.session_state.draft_document.text
+    draft = st.session_state.get('draft_document')
+    if draft is None:
+        st.caption('Confirm details above first. Missing or unconfirmed values become visible placeholders. Regenerate explicitly to replace an existing draft.')
+        return
+    if draft.critical_missing:
+        st.warning('Please provide or review: ' + '; '.join(LABELS[n] for n in draft.critical_missing))
+    if draft.missing:
+        st.caption('Placeholders remain: ' + '; '.join(LABELS[n] for n in draft.missing))
+    st.caption('Draft body is in English; your confirmed statements keep their original language. Edits do not change case facts.')
+    edited = st.text_area('Edit draft / मसौदा संपादित करें', key='draft_text', height=340, max_chars=12000)
+    with st.expander('Preview / पूर्वावलोकन'):
+        st.text(NOTICE + '\n\n' + edited)
+    revision = sha256((draft.fingerprint + edited).encode()).hexdigest()[:16]
+    reviewed = st.checkbox('I reviewed the text and placeholders and take responsibility for its use / मैंने मसौदा जाँच लिया है', key='draft_review_' + revision)
+    payload = b''
+    error = None
+    try:
+        payload = download_bytes(state, draft, edited, reviewed=reviewed)
+    except ValueError as exc:
+        error = str(exc)
+    if error:
+        st.caption(error)
+    st.download_button('Download text / टेक्स्ट डाउनलोड', data=payload, file_name=draft.filename,
+                       mime='text/plain; charset=utf-8', disabled=error is not None, key='draft_download')
+
+
+def main():
+    st.set_page_config(page_title='NyayaSaathi', page_icon='⚖️')
+    st.title('NyayaSaathi')
+    preference = st.selectbox('Response language / जवाब की भाषा', ['English', 'हिन्दी'], key='language')
+    language = 'hi' if preference == 'हिन्दी' else 'en'
+    st.caption(localize('AI legal-information assistant, not a licensed lawyer. Information may be incomplete or outdated. Review drafts and consult a qualified lawyer for advice or urgent matters.',
+                        'AI कानूनी-जानकारी सहायक, लाइसेंस प्राप्त वकील नहीं। जानकारी अधूरी या पुरानी हो सकती है। मसौदा जाँचें और सलाह या तात्कालिक मामलों में योग्य वकील से मिलें।', language))
+    st.caption('Online shopping complaints and rental deposits only. Fictional examples only; no private case data. / केवल काल्पनिक खरीदारी और जमा राशि के मामले।')
+    mode = st.selectbox('Mode / तरीका', ['Choose mode', 'Offline simulation', 'Gemini'], key='mode')
+    if st.session_state.get('active_mode') != mode:
         reset_case(language)
         st.session_state.active_mode = mode
-    if "case" not in st.session_state:
+    if 'case' not in st.session_state:
         st.session_state.case = CaseState(language=language)
-    if st.button("New case / नया मामला"):
+    if st.button('New case / नया मामला', type='primary'):
         reset_case(language)
         st.rerun()
     state = replace(st.session_state.case, language=language)
     st.session_state.case = state
-    if mode == "Choose mode":
-        st.info("Choose a mode to begin. Voice and document drafting are not available yet.")
+    if mode == 'Choose mode':
+        st.info('Choose a mode to begin. Voice input is not available yet.')
         return
     client = None
-    if mode == "Offline simulation":
-        st.warning("OFFLINE SIMULATION / ऑफलाइन अनुकरण — deterministic rules, not live AI. No API requests. Limited language understanding.")
-        client = create_llm_client(Settings(llm_provider="simulation"))
+    if mode == 'Offline simulation':
+        st.warning('OFFLINE SIMULATION / ऑफलाइन अनुकरण — deterministic rules, not live AI. No API requests. Limited language understanding.')
+        client = create_llm_client(Settings(llm_provider='simulation'))
     else:
-        st.info(localize("Gemini mode sends your submitted text and case context to Google. This app stores them only in this session; provider policies still apply.",
-                         "Gemini मोड में आपका भेजा पाठ और मामले का संदर्भ Google को जाएगा। ऐप इसे केवल इस सत्र में रखता है; प्रदाता की नीतियाँ अलग लागू हैं।", language))
-        consent = st.checkbox("I permit live Gemini requests using fictional data / काल्पनिक डेटा से Gemini अनुरोध की अनुमति", key="live_consent")
+        st.info('Gemini sends submitted text and case context to Google. Session-only app storage; provider policies still apply.')
+        consent = st.checkbox('I permit live Gemini requests using fictional data / काल्पनिक डेटा से Gemini अनुरोध की अनुमति', key='live_consent')
         try:
-            settings = load_streamlit_settings(dotenv_path=ROOT / ".env")
+            settings = load_streamlit_settings(dotenv_path=ROOT / '.env')
             settings.require_gemini()
-            if settings.llm_provider != "gemini":
-                raise ConfigurationError("Gemini mode requires LLM_PROVIDER=gemini.")
+            if settings.llm_provider != 'gemini':
+                raise ConfigurationError('Gemini mode requires LLM_PROVIDER=gemini.')
             if consent:
                 client = create_llm_client(settings, allow_live=True)
         except ConfigurationError as error:
-            st.warning(str(error) + " Offline simulation can be selected explicitly; no fallback occurs.")
+            st.warning(str(error) + ' Offline simulation can be selected explicitly; no fallback occurs.')
     try:
         catalogue = load_catalogue()
     except CatalogueError:
         catalogue = ()
-        st.warning(localize("Sources could not be loaded. Legal claims are disabled; only intake is available.",
-                            "स्रोत नहीं खुले। कानूनी दावे बंद हैं; केवल जानकारी इकट्ठी की जा सकती है।", language))
+        st.warning('Sources unavailable. Legal claims disabled; neutral requests do not establish rights.')
     for message in state.history:
         with st.chat_message(message.role):
-            if message.role == "user":
-                st.text(message.content)  # User assertions cannot inject Markdown links/HTML.
-            else:
-                st.markdown(message.content)
+            st.text(message.content)
     if state.blocked:
-        st.error(localize("This case needs qualified legal help. Start a new case only for a separate supported issue.",
-                          "इस मामले में योग्य कानूनी मदद चाहिए। नया मामला केवल अलग समर्थित समस्या के लिए शुरू करें।", language))
-    if state.last_result and state.last_result.error:
-        st.error(state.last_result.message)
-    if state.last_result and state.last_result.gaps:
-        st.warning(localize("Source limitations remain; no statutory entitlement or deadline has been verified for this case.",
-                            "स्रोत सीमित हैं; इस मामले के अधिकार या कानूनी समय-सीमा सत्यापित नहीं हैं।", language))
+        st.error('This case needs qualified legal help. Start a new case only for a separate supported issue.')
     if state.topic in FIELDS:
-        st.subheader(localize("Case summary — your statements, not proven facts", "मामले का सार — आपके कथन, सिद्ध तथ्य नहीं", language))
-        rows = [{"Detail / जानकारी": LABELS[f.name], "Value / मान": f.value if f.value is not None else "Unknown / अज्ञात",
-                 "Status / स्थिति": "User confirmed / पुष्टि" if f.confirmed else "Proposed — review / प्रस्तावित",
-                 "Turn / संदेश": f.turn} for f in state.facts + state.proposals]
-        if rows:
-            st.table(rows)
-        missing = missing_fields(state)
-        st.caption(localize("Missing or not confirmed: ", "अज्ञात या अपुष्ट: ", language) + "; ".join(LABELS[f] for f in missing))
+        st.subheader('Case summary / मामले का सार')
+        st.caption('Your assertions, not independently proven facts. / आपके कथन, स्वतंत्र रूप से सिद्ध तथ्य नहीं।')
+        current = {f.name: f for f in state.facts + state.proposals}
+        if current:
+            with st.container(border=True):
+                st.table([{'Detail / जानकारी': LABELS[f.name],
+                           'Value / मान': (f.value[:150] + '…' if len(f.value or '') > 150 else f.value) or 'Unknown / अज्ञात',
+                           'Status / स्थिति': 'Conflict / विरोध' if f.name in state.conflicts else 'Confirmed / पुष्टि' if f.confirmed else 'Review / जाँचें'}
+                          for f in list(current.values())[:6]])
+                st.caption('Full details and corrections are in the review form below. / पूरी जानकारी नीचे जाँचें।')
+        absent = unanswered_fields(state)
+        st.caption(('Missing / अज्ञात: ' + '; '.join(LABELS[n] for n in absent)) if absent else 'All essential details provided; review any unconfirmed values.')
+        if state.proposals:
+            st.caption('Awaiting confirmation / पुष्टि बाकी: ' + '; '.join(LABELS[f.name] for f in state.proposals))
         if state.conflicts:
-            st.warning(localize("Conflicting details — prior confirmed values are kept until you correct them: ",
-                                "विरोधी जानकारी — आपके सुधार तक पुरानी पुष्टि सुरक्षित है: ", language) + "; ".join(LABELS[f] for f in state.conflicts))
-        if not state.blocked:
-            st.subheader(localize("Evidence checklist — gather if available", "सबूत सूची — उपलब्ध हों तो रखें", language))
-            for item in evidence_checklist(state.topic, language):
-                st.text("• " + item)
-        with st.expander("Review, confirm or correct details / जानकारी जाँचें और सुधारें"):
-            name = st.selectbox("Detail / जानकारी", FIELDS[state.topic], format_func=lambda f: LABELS[f], key="fact_field")
-            current = next((f for f in state.proposals + state.facts if f.name == name), None)
-            revision = sha256(repr((current.value, current.confirmed) if current else None).encode()).hexdigest()[:16]
-            suffix = f"{state.case_id}_{name}_{len(state.processed_ids)}_{revision}"
-            value = st.text_area("Your statement / आपका कथन", value=current.value or "" if current else "", key="fact_value_" + suffix, max_chars=500)
-            unknown = st.checkbox("I do not know / मुझे नहीं पता", key="fact_unknown_" + suffix)
-            st.caption("Dates: YYYY-MM-DD. INR amounts: digits without commas. Confirmation records your statement, not proof.")
-            if st.button("Confirm detail / पुष्टि करें", disabled=state.blocked is not None):
-                try:
-                    st.session_state.case = confirm_fact(state, name, None if unknown else value.strip())
-                    st.rerun()
-                except ValueError as error:
-                    st.warning(str(error))
-    submitted = st.chat_input("Describe your issue / अपनी समस्या बताएँ", max_chars=4000,
+            st.warning('Conflicting details: prior confirmed values remain until you review and correct them.')
+        render_review(state)
+        st.caption('Evidence to gather / सबूत सूची: ' + ' • '.join(evidence_checklist(state.topic, language)))
+        render_sources(state, catalogue)
+        render_draft(state)
+    submitted = st.chat_input('Describe your issue / अपनी समस्या बताएँ', max_chars=4000,
                               disabled=client is None or state.blocked is not None or len(state.processed_ids) >= 20)
-    if submitted and client is not None:
-        with st.spinner(localize("Checking your message…", "आपका संदेश जाँचा जा रहा है…", language)):
+    if submitted and client:
+        with st.spinner('Checking your message / संदेश की जाँच…'):
             st.session_state.case = process_turn(state, submitted, uuid4().hex, client, catalogue)
         st.rerun()
-    st.caption(localize("Session-only memory. Refresh may lose your case. Maximum 20 submissions; start a new case to reset.",
-                        "जानकारी केवल सत्र में रहती है। रीफ्रेश से मिट सकती है। अधिकतम 20 संदेश; नए मामले से रीसेट करें।", language))
+    st.caption('Session-only memory; refresh may lose your case. Maximum 20 submissions. New case clears facts and drafts.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

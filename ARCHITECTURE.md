@@ -1,6 +1,7 @@
 # NyayaSaathi architecture
 
-Status: planned; see PROJECT_REQUIREMENTS.md for scope and acceptance requirements.
+Status: Milestones 1–4 implemented; voice/evaluation/deployment remain planned.
+See PROJECT_REQUIREMENTS.md for scope and acceptance requirements.
 One Python 3.12 Streamlit application, small pure-Python business modules, and
 two external providers. No database, background workers, or vector index.
 
@@ -153,6 +154,14 @@ use,” and remain editable. No invented allegations, legal citations, penalties
 or deadlines. Edited draft text is not silently merged back into case facts.
 Consumer drafts address seller/platform or contain a grievance narrative; rental
 drafts request repayment/itemized deductions. No court-ready pleadings promised.
+
+Milestone 4 retains the latest scope/risk assessment separately from transient
+display results so bulk confirmation cannot accidentally discard the safety gate.
+The drafting module rechecks risk/history and conflicts at generation and export.
+Drafts carry a case fingerprint: new submissions, fact changes or a different case
+require explicit regeneration. User text edits require renewed acknowledgement;
+export always prefixes the review disclaimer. Source details live in a UI expander,
+with current jurisdiction and catalogue eligibility rechecked on reruns.
 
 ## Test seams and known limits
 

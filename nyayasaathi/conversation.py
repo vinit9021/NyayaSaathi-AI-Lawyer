@@ -16,6 +16,10 @@ FIELDS = {
     "rental_deposit": ("problem", "state", "city", "deposit_paid", "deposit_returned", "move_out_date",
                        "deductions", "agreement", "evidence", "contact_attempts", "desired_outcome"),
 }
+OPTIONAL_FIELDS = {
+    "consumer": ("sender_name", "sender_contact", "recipient_contact", "product", "order_reference"),
+    "rental_deposit": ("sender_name", "sender_contact", "recipient_contact", "landlord", "rental_property", "agreement_date"),
+}
 QUESTIONS = {
     "problem": ("What happened?", "क्या हुआ था?"),
     "seller": ("Which seller or shopping platform was involved?", "कौन-सा विक्रेता या ऑनलाइन प्लेटफॉर्म था?"),
@@ -58,6 +62,12 @@ def missing_fields(state: CaseState) -> tuple[str, ...]:
     return tuple(name for name in FIELDS.get(state.topic, ()) if name not in known)
 
 
+def unanswered_fields(state: CaseState) -> tuple[str, ...]:
+    """Separate truly absent/unknown values from provided-but-unconfirmed details."""
+    known = {f.name for f in state.facts + state.proposals if f.value is not None}
+    return tuple(name for name in FIELDS.get(state.topic, ()) if name not in known)
+
+
 def follow_up_questions(state: CaseState) -> tuple[str, ...]:
     index = 1 if state.language == "hi" else 0
     answered = {f.name for f in state.facts} | {f.name for f in state.proposals}
@@ -66,7 +76,7 @@ def follow_up_questions(state: CaseState) -> tuple[str, ...]:
         questions.append(localize("Please review and confirm the proposed details below, especially any conflicts.",
                                   "नीचे प्रस्तावित जानकारी जाँचें और पुष्टि करें, खासकर विरोधी जानकारी।", state.language))
     questions.extend(QUESTIONS[name][index] for name in FIELDS.get(state.topic, ()) if name not in answered)
-    return tuple(questions[:3])
+    return tuple(questions[:2])
 
 
 def evidence_checklist(topic: str, language: str) -> tuple[str, ...]:
@@ -96,8 +106,10 @@ def result_text(result: TurnResult) -> str:
 
 
 def _finish(state: CaseState, text: str, submission_id: str, result: TurnResult) -> CaseState:
+    chat = "\n\n".join((result.message, *result.questions))
     return replace(state, processed_ids=state.processed_ids + (submission_id,), last_result=result,
-                   history=(state.history + (Message("user", text), Message("assistant", result_text(result))))[-40:])
+                   assessment=result.decision,
+                   history=(state.history + (Message("user", text), Message("assistant", chat)))[-40:])
 
 
 def process_turn(state: CaseState, text: str, submission_id: str, client: LLMClient,
@@ -175,11 +187,11 @@ def process_turn(state: CaseState, text: str, submission_id: str, client: LLMCli
     ids = tuple(c.id for source in selected for c in source.claims if c.kind != "statutory")
     grounded = ground_claims(selected, decision, ids, state=jurisdiction, language=state.language, as_of=as_of)
     gaps = retrieved.gaps + (grounded.gaps if ids else ("no_verified_applicable_sources",))
-    message = localize("I have recorded proposed details. Confirm or correct them below. These are your statements, not independently proven facts.",
-                       "प्रस्तावित जानकारी दर्ज है। नीचे पुष्टि या सुधार करें। ये आपके कथन हैं, स्वतंत्र रूप से सिद्ध तथ्य नहीं।", state.language)
+    message = localize("Details recorded for your review. Legal information and sources are below.",
+                       "जानकारी जाँच के लिए दर्ज है। कानूनी जानकारी और स्रोत नीचे हैं।", state.language)
     if gaps:
-        message += " " + localize("I could not verify the legal position from the available sources. General information below does not establish an entitlement; consult qualified help for legal advice.",
-                                   "उपलब्ध स्रोतों से कानूनी स्थिति सत्यापित नहीं हुई। नीचे सामान्य जानकारी किसी अधिकार का निर्णय नहीं है; कानूनी सलाह के लिए योग्य सहायता लें।", state.language)
+        message += " " + localize("I could not verify the legal position; source limitations are shown below.",
+                                   "कानूनी स्थिति सत्यापित नहीं हुई; स्रोतों की सीमाएँ नीचे हैं।", state.language)
     result = TurnResult(message, decision, follow_up_questions(updated), missing_fields(updated),
                         evidence_checklist(updated.topic, state.language), grounded.claims, tuple(dict.fromkeys(gaps)))
     return _finish(updated, text, submission_id, result)

@@ -147,3 +147,15 @@ def confirm_fact(state: CaseState, name: str, value: str | None) -> CaseState:
         conflicts=tuple(f for f in state.conflicts if f != name), last_result=None,
         history=(state.history + (Message("user", f"User-confirmed {name}: {text}"),))[-40:],
     )
+
+
+def confirm_facts(state: CaseState, values: dict[str, str | None]) -> CaseState:
+    """Atomic bulk review: validate everything before committing any correction."""
+    for name, value in values.items():
+        validate_confirmed_value(name, value)
+    result = state
+    for name, value in values.items():
+        result = confirm_fact(result, name, value)
+        if result.blocked:
+            return replace(state, blocked=result.blocked, last_result=None)
+    return result
