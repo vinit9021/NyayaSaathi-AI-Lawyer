@@ -1,138 +1,87 @@
 # NyayaSaathi — AI Lawyer for Everyday Legal Problems in India
 
-An Indian legal-information prototype limited to consumer shopping complaints
-and rental security-deposit disputes. **Not a licensed lawyer.**
+Legal-information prototype for online shopping complaints and rental security-deposit disputes. **Not a licensed lawyer. Fictional cases only.**
 
-## Current status: Milestone 2 sources and safety
+## Milestone 3 status
 
-Implemented: package structure, validated configuration, provider-neutral LLM
-request/response/error contracts, injectable provider factory, and offline tests.
-Milestone 2 adds curated-source validation/retrieval, conservative scope/risk
-screening, and fixed-text claim/citation enforcement. `app.py` still displays a
-foundation status message only. Case extraction, chat orchestration, Gemini
-calls, speech, and document drafting are **not implemented**. There is no public
-deployment or live model evaluation result yet.
+Implemented: text chat, English/Hindi responses, English/Hindi/Hinglish intake through structured extraction, session context, editable facts, focused follow-ups, evidence checklists, and source-backed practical information. The user explicitly brought text UI work forward from Milestone 4. No voice, document generation, public deployment, or live model evaluation is claimed.
 
-The catalogue has four active verified guidance sources (NCH grievance routing,
-NCH online-purchase guidance, NALSA referrals, and PIB model-tenancy context), one
-verified original statutory document held reference-only, and two inaccessible
-unverified candidates. No state-specific rental entitlement or statutory refund
-deadline is enabled. See [source coverage and safety behavior](sources/README.md)
-and the [actual verification log](sources/VERIFICATION_LOG.md).
+Gemini returns classification and proposed facts, never unrestricted legal prose. Extracted values must appear in verbatim current-message quotes. Users explicitly confirm or correct proposals; confirmation records an assertion, not independent proof. Conflicting details preserve prior confirmed values until reviewed. Missing details remain unknown.
 
-Retrieval filters topic, jurisdiction, verification, and review date before
-ranking tags. Claim output uses only approved English/Hindi text and stored URLs;
-invented IDs, altered claims, and irrelevant real citations fail closed. Unknown
-state law produces an explicit gap. High-risk/unsupported cases cannot pass the
-drafting guard. Local keyword screening is conservative and incomplete: later
-semantic confirmation is required before unlocking supported-case drafting.
-
-See [requirements](PROJECT_REQUIREMENTS.md), [architecture](ARCHITECTURE.md),
-[implementation plan](IMPLEMENTATION_PLAN.md), and [agent instructions](AGENTS.md).
+All legal output is fixed reviewed catalogue text selected from actually retrieved eligible sources, with stored URLs, locators, review dates, and caveats. Four active guidance sources cover NCH routing/online shopping, NALSA referrals, and PIB model-tenancy context. No statutory entitlement, refund deadline, deposit cap, judgment, or guaranteed outcome is enabled. See [source coverage](sources/README.md) and [verification log](sources/VERIFICATION_LOG.md).
 
 ## Windows PowerShell setup
 
-Use Python **3.12** (verified locally with 3.12.10), Git, and PowerShell. No Docker,
-WSL, virtual-environment activation, or execution-policy change is needed. From
-the repository root:
+Use Python **3.12**, Git, and PowerShell. No Docker, WSL, activation, or execution-policy change. From the repository root, for a fresh environment:
 
 ```powershell
 python --version
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pip check
-.\.venv\Scripts\python.exe -m pytest -q
-```
-
-Runtime direct dependencies are pinned in `requirements.txt`; development adds
-Pytest through `requirements-dev.txt`. Transitive dependencies are resolved by
-pip, not fully locked. This avoids freezing Windows-only packages into the cloud
-runtime requirements. No API key is required for setup or offline tests.
-
-Optional foundation-only preview:
-
-```powershell
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Stop with Ctrl+C. The preview does not construct provider clients or make AI API
-requests. It is not the working legal assistant promised for later milestones.
+For the existing installed environment, run only the final command. Open the local URL printed by Streamlit; stop with Ctrl+C. Select a language and explicit mode. Opening the app sends no API request.
 
-## Private configuration
+### Offline simulation
 
-`.env.example` contains blank key/model placeholders and safe defaults. Do not
-paste credentials into chat, commit them, or put them in screenshots/logs.
-Local configuration supports environment variables and an explicitly supplied
-`.env` path. Loading configuration does not implicitly search parent directories
-or mutate the process environment. No `.env` file is needed for this milestone.
+Select **Offline simulation**. No keys or network are needed. Its prominent label distinguishes deterministic demonstration from live AI. It recognizes limited topic words and optional field labels, not complete canned cases. Try fictional input:
+
+```text
+online refund; seller: FictionalShop; amount_paid: 5000; state: Maharashtra
+```
+
+Then `purchase_date: 2026-10-01; desired_outcome: refund`. Review and confirm details in the expandable editor. Dates require YYYY-MM-DD; INR amounts require digits without commas. Select “I do not know” for unknown facts. Rental example: `landlord deposit; deposit_paid: 20000; state: Maharashtra`.
+
+Simulation language understanding is limited. Natural-language Hindi/Hinglish fixtures exercise the engine, but do not establish real Gemini quality. No provider error silently switches to simulation.
+
+### Real Gemini mode
+
+Securely configure `GEMINI_API_KEY` and `GEMINI_MODEL` through environment variables, an ignored repository-root `.env`, or root-level Streamlit secrets. `.env.example` contains placeholders only. Never paste keys into chat, screenshots, or Git. Select an account-available model supporting structured JSON output; no model ID is baked in or silently substituted.
+
+Select **Gemini** and explicitly permit live requests using fictional data. A submitted message then sends the text and session context to Google. Missing configuration disables chat and shows guidance. Account model availability, quota, billing, and provider privacy terms require verification. **This milestone tested Gemini with mocks only; no live request was made.** The adapter uses the [official Google Gen AI SDK](https://googleapis.github.io/python-genai/).
 
 | Setting | Default/purpose |
 | --- | --- |
-| `LLM_PROVIDER` | `gemini`; adapter selection, no production adapter registered yet |
-| `GEMINI_MODEL` | Unset; choose an actually available model in milestone 3 |
-| `GEMINI_API_KEY` | Unset; required only when Gemini integration is used later |
-| `GROQ_API_KEY` | Unset; voice-specific, not a text prerequisite |
-| `LLM_TIMEOUT_SECONDS` | 30; accepted range 1–30 |
-| `LLM_MAX_RETRIES` | 1; accepted range 0–1 |
-| `LLM_MAX_OUTPUT_TOKENS` | 2048; accepted range 1–8192, subject to future model validation |
+| `LLM_PROVIDER` | `gemini`; required for real UI mode |
+| `GEMINI_MODEL` | Unset; configure an available structured-output model |
+| `GEMINI_API_KEY` | Unset; real Gemini only |
+| `GROQ_API_KEY` | Unset; unused until voice implementation |
+| `LLM_TIMEOUT_SECONDS` | 30 per attempt; range 1–30 |
+| `LLM_MAX_RETRIES` | 1; range 0–1; transient timeout/network/server failures only |
+| `LLM_MAX_OUTPUT_TOKENS` | 2048; range 1–8192; also capped by request |
 
-`load_settings(environ=..., secrets=..., dotenv_path=...)` accepts injectable
-mappings for tests. Precedence is environment > Streamlit secrets > explicit
-dotenv file > defaults. Blank values override lower-priority values; blank keys
-mean unavailable. Dotenv interpolation is disabled. Secrets are omitted from
-configuration repr, but never serialize/log the configuration object as a whole.
+Precedence: environment > Streamlit secrets > explicit root `.env` > defaults. Blank values override lower priorities; dotenv interpolation is disabled. Safe errors cover missing/invalid credentials, quota, timeouts, network failures and malformed output; confirmed facts remain intact. Authentication/quota errors are not retried. Retries may incur charges; no free quota is assumed.
 
-`load_streamlit_settings()` is the future UI integration boundary. It lazily
-reads root-level Streamlit secrets, handles absent secrets, and snapshots the
-environment first to preserve precedence. Invalid configuration gets safe errors.
-`require_gemini()` and `require_groq()` check readiness independently, allowing
-configuration/imports with no credentials. The status preview does not read keys.
+Future Community Cloud deployment uses `app.py`, Python **3.12**, runtime `requirements.txt`, and dashboard Secrets. See [Streamlit secrets documentation](https://docs.streamlit.io/develop/concepts/connections/secrets-management). Deployment remains Milestone 7 and is untested.
 
-For future Community Cloud deployment, choose `app.py`, Python **3.12**, and
-install runtime `requirements.txt`. Add root-level settings using the cloud's
-Secrets dashboard; local `.streamlit/secrets.toml` is ignored. See the official
-[Streamlit secrets guide](https://docs.streamlit.io/develop/concepts/connections/secrets-management).
-No Windows paths are embedded in runtime configuration. Deployment itself is
-milestone 7 and has not been tested on Community Cloud.
+## Architecture and safeguards
 
-## Provider boundary and offline tests
+`app.py` owns session-local immutable `CaseState`. `conversation.py` orchestrates screening, extraction, merging, follow-ups, retrieval and grounding. `extraction.py` validates provenance, conflicts and confirmation. Business logic uses `LLMClient.generate(LLMRequest) -> LLMResponse`; SDK types stay in the Gemini adapter. A replacement provider needs an adapter/factory registration; Gemini model changes use configuration.
 
-Business code will depend on `LLMClient.generate(LLMRequest) -> LLMResponse`.
-Only plain dataclasses/values cross the boundary. Normalized error codes cover
-missing credentials, authentication, quota, timeout, unavailability, and invalid
-responses. Adapters must enforce configured bounds and normalize SDK errors.
-The foundation defines these contracts; it does not yet implement SDK requests
-or retries. A real response is not proof of legal accuracy or grounding.
+Deterministic screening precedes the model and remains the final boundary. Structured semantic assessment supplements it; confidence below 0.8 triggers clarification. Self-reported confidence is not calibrated. High-risk decisions persist until reset. Criminal/family cases, complex property litigation, court representation, urgent proceedings, danger and unsupported requests escalate. Conservative keyword rules can produce false positives (including negation) and miss novel wording.
 
-`create_llm_client(settings, builders=...)` selects an explicitly registered
-builder. Tests inject `tests.fakes.FakeLLM`; production has no fake fallback.
-Until milestone 3 registers Gemini, the default factory returns a safe
-unavailable error. Replacing a vendor requires an adapter and factory
-registration; choosing another supported model will be configuration-only.
+Only confirmed state informs jurisdiction-specific retrieval; conflicting state is treated as unknown. No rental statutory rule is active even with a known state. Missing, stale or unverified sources disable claims and show uncertainty. No arbitrary model prose, citation, statute or judgment is rendered as a legal explanation. This prevents model-invented citations from reaching legal output; it does not guarantee legal accuracy or semantic classification. Catalogue expiry dates require actual source re-review.
+
+Memory is session-only: at most 20 submissions and 40 retained messages, plus facts and persistent risk flags. Refresh may lose it. New case and mode changes clear context. No database, application chat logging, shared user-state cache, audio retention, private evidence upload, or automatic filing exists. External provider policies still apply.
+
+## Offline verification
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_config.py tests/test_contracts.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_extraction.py tests/test_conversation.py tests/test_llm.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_ui.py -q
 .\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m compileall -q app.py nyayasaathi tests
+.\.venv\Scripts\python.exe -m pip check
 ```
 
-Tests isolate configuration, use synthetic values, block outbound socket
-connections, mock Streamlit secrets/SDK constructors, and cover precedence,
-missing/invalid settings, safe errors, contract validation, and factory injection.
-They do not prove legal reasoning quality, transcription accuracy, or live
-provider availability. New source/safety tests cover absent/unverified/stale
-sources, state filtering, multilingual screening, mixed risks, and fabricated
-claims/citations. Source content was researched separately; offline tests do not
-prove legal accuracy. Later evaluation will save real synthetic-run outputs
-separately; none are invented here.
+Tests block outbound sockets and inject synthetic responses. They cover context, multilingual intake, contradictions/corrections, missing facts/sources, risks/injection, fabricated citations, provider errors/retries, UI confirmation/reset, consent and separate sessions, plus all Milestone 1/2 regressions. They do not prove live model quality, legal accuracy or cloud operation. Unedited live evaluation outputs remain Milestone 6 work.
 
-## Privacy and repository hygiene
+Runtime direct dependencies remain pinned; Pytest is in `requirements-dev.txt`. Transitive dependencies are not fully locked. No new dependencies were needed for Milestone 3.
 
-Never commit credentials, private legal case data, or assignment PDFs. `.env`,
-`.streamlit/secrets.toml`, virtual environments, private-data directories, caches,
-and all PDFs are ignored. Only `.env.example` is narrowly exempted. Review changes
-and stage exact file paths; ignore rules do not detect secrets inside source.
+## Repository and next milestone
 
-The planned public free-tier demo is synthetic-only. No real case data should be
-submitted until provider terms/privacy controls are reviewed. The app will never
-send/file a complaint automatically. Next milestone: case intake and grounded
-text engine (Milestone 3). It has not been started.
+Never commit credentials, private cases, evidence, audio or assignment PDFs. Secrets, virtual environments, private-data directories, caches and PDFs remain ignored; only `.env.example` is exempted. Stage exact paths.
+
+See [requirements](PROJECT_REQUIREMENTS.md), [architecture](ARCHITECTURE.md), [plan](IMPLEMENTATION_PLAN.md), and [agent instructions](AGENTS.md). Next: **Milestone 4 — Streamlit text UI and editable drafts**. Text chat is already implemented by request; drafting and its safety checks remain.

@@ -80,6 +80,12 @@ never bypass the registry. Unseen inputs are not matched to canned case answers.
 
 ### 4. Streamlit text UI and editable drafts (about 60 minutes)
 
+Progress note: the user explicitly requested the text chat UI, confirmation editor,
+reset, and session-isolation tests during Milestone 3. Those parts were brought
+forward; editable drafts and their end-to-end safety checks remain Milestone 4.
+Milestone 3 Gemini validation is offline/mocked only. A live account-supported model
+must be configured and explicitly authorized before live evaluation.
+
 Build chat, preferred language, privacy notice, disclaimer, editable summary,
 evidence checklist, source display, and two plain-text draft templates. Add
 reset and explicit submissions. Update README with local setup and boundaries.

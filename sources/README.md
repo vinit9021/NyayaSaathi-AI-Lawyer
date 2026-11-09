@@ -69,9 +69,9 @@ It detects common English/Hindi/Hinglish unsupported/risk/injection indicators.
 Risk takes priority over supported words. Mixed supported topics clarify.
 Negation is deliberately not resolved: even “no hearing yet” escalates pending
 review. Unknown phrasing may evade keyword detection; do not claim exhaustive
-protection. Until milestone 3 successfully classifies the complete case context,
-`classifier_succeeded=False` keeps drafting blocked. On later turns, orchestration
-must preserve earlier risk flags and screen context, not only the latest text.
+protection. Milestone 3 supplies a structured semantic scope/risk assessment;
+`classifier_succeeded=False` keeps the gate blocked when confidence is insufficient.
+Orchestration preserves risk flags and screens retained context, not only the latest text.
 Oversized input must be bounded without dropping risk evidence.
 
 `require_drafting_allowed()` is a guard for the future drafting module, not a
@@ -96,8 +96,8 @@ advice; referral and review caveats must remain visible.
 Supported routing: online refunds, defective/damaged products and non-delivery;
 rental deposit withholding/disputed deductions with state-law uncertainty.
 No refund entitlement, deadline, deposit cap, deduction legality, court outcome,
-or case law is approved. Rental facts, neutral drafting, and conversational
-follow-ups remain future milestones. No state-specific law is currently active.
+or case law is approved. Milestone 3 supports rental facts and conversational
+follow-ups; neutral drafting remains future work. No state-specific law is active.
 
 Criminal defence, divorce/custody, complex property litigation, representation,
 urgent proceedings, physical danger, and other high-risk matters escalate to

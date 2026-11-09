@@ -7,6 +7,8 @@ never be displayed as verified legal guidance without later safety validation.
 from dataclasses import dataclass, field
 from typing import Literal
 from datetime import date
+from uuid import uuid4
+import json
 
 
 def require_text(value: object, label: str) -> None:
@@ -36,6 +38,7 @@ class LLMRequest:
     messages: tuple[Message, ...] = field(repr=False)
     max_output_tokens: int = 2048
     response_format: Literal["json", "text"] = "json"
+    response_schema: dict | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         require_text(self.system_instruction, "System instruction")
@@ -46,6 +49,10 @@ class LLMRequest:
         require_int(self.max_output_tokens, "Output token limit", 1, 8192)
         if self.response_format not in ("json", "text"):
             raise ValueError("Response format must be json or text.")
+        if self.response_schema is not None:
+            if not isinstance(self.response_schema, dict) or self.response_format != "json":
+                raise ValueError("Response schema requires a JSON object and JSON format.")
+            json.dumps(self.response_schema, allow_nan=False)
 
 
 @dataclass(frozen=True)
@@ -148,3 +155,79 @@ class GroundedClaim:
 class ClaimDecision:
     claims: tuple[GroundedClaim, ...]
     gaps: tuple[str, ...]
+
+
+CASE_FIELDS = (
+    "problem", "seller", "city", "state", "amount_paid", "refund_amount",
+    "purchase_date", "delivery_date", "evidence", "contact_attempts", "desired_outcome",
+    "deposit_paid", "deposit_returned", "move_out_date", "deductions", "agreement",
+)
+
+
+@dataclass(frozen=True)
+class CaseFact:
+    name: str
+    value: str | None = field(repr=False)
+    quote: str = field(repr=False)
+    turn: int
+    confirmed: bool = False
+
+    def __post_init__(self):
+        if self.name not in CASE_FIELDS:
+            raise ValueError("Unknown case field.")
+        if self.value is not None:
+            require_text(self.value, "Fact value")
+            if len(self.value) > 500:
+                raise ValueError("Fact value is too long.")
+        require_text(self.quote, "Fact provenance")
+        require_int(self.turn, "Origin turn", 0, 20)
+        if type(self.confirmed) is not bool:
+            raise ValueError("Confirmation must be explicit.")
+
+
+@dataclass(frozen=True)
+class Extraction:
+    topic: str
+    confidence: float
+    risk_flags: tuple[str, ...]
+    facts: tuple[CaseFact, ...]
+
+
+@dataclass(frozen=True)
+class TurnResult:
+    message: str
+    decision: SafetyDecision
+    questions: tuple[str, ...] = ()
+    missing_fields: tuple[str, ...] = ()
+    evidence_checklist: tuple[str, ...] = ()
+    claims: tuple[GroundedClaim, ...] = ()
+    gaps: tuple[str, ...] = ()
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class CaseState:
+    case_id: str = field(default_factory=lambda: uuid4().hex)
+    language: str = "en"
+    topic: str = "unclear"
+    facts: tuple[CaseFact, ...] = field(default=(), repr=False)
+    proposals: tuple[CaseFact, ...] = field(default=(), repr=False)
+    conflicts: tuple[str, ...] = ()
+    history: tuple[Message, ...] = field(default=(), repr=False)
+    processed_ids: tuple[str, ...] = ()
+    blocked: SafetyDecision | None = None
+    last_result: TurnResult | None = field(default=None, repr=False)
+
+    def __post_init__(self):
+        if self.language not in {"en", "hi"} or self.topic not in {"consumer", "rental_deposit", "unclear", "unsupported"}:
+            raise ValueError("Invalid case language or topic.")
+        for name in ("facts", "proposals"):
+            values = getattr(self, name)
+            if not isinstance(values, tuple) or any(not isinstance(v, CaseFact) for v in values):
+                raise ValueError("Case facts must be typed tuples.")
+            if len({v.name for v in values}) != len(values):
+                raise ValueError("Duplicate case field.")
+        if any(not f.confirmed for f in self.facts) or any(f.confirmed for f in self.proposals):
+            raise ValueError("Confirmed facts and proposals must remain separate.")
+        if len(self.history) > 40 or len(self.processed_ids) > 20:
+            raise ValueError("Case session limit exceeded.")
