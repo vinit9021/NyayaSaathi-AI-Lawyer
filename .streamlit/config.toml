@@ -6,6 +6,9 @@ textColor = "#172B3A"
 font = "sans serif"
 
 [server]
+address = "0.0.0.0"
+port = 7860
+headless = true
 maxUploadSize = 5
 maxMessageSize = 10
 enableXsrfProtection = true

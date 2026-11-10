@@ -24,6 +24,14 @@ python -m venv .venv
 
 For the existing installed environment, run only the final command. Open the local URL printed by Streamlit; stop with Ctrl+C. Select a language, then type or record a fictional supported issue. The app uses the configured live Gemini provider automatically; opening the app sends no API request.
 
+## Hugging Face Docker Space deployment
+
+The production container is defined in [Dockerfile](Dockerfile), binds
+Streamlit to `0.0.0.0:7860`, and includes the reviewed catalogue under
+[`sources/`](sources/). Space metadata and the separate Space-repository
+copy workflow are documented in [deployment/README.md](deployment/README.md);
+the root GitHub README remains the project documentation.
+
 ### Offline test fixtures
 
 Offline simulation is available only through test fixtures and mocks; it is not a user-facing application mode and is never used as a live-provider fallback. Tests need no keys or network. The deterministic fixture recognizes limited topic words and optional field labels:
