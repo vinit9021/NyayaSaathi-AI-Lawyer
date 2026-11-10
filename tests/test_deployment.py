@@ -28,6 +28,20 @@ def test_container_and_space_metadata_are_production_ready():
     assert "app.py.backup" in dockerignore
 
 
+def test_render_uses_platform_port_and_secure_environment_configuration():
+    render = (ROOT / "render.yaml").read_text(encoding="utf-8")
+    streamlit_config = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+
+    assert "runtime: python" in render
+    assert "pip install -r requirements.txt" in render
+    assert "--server.address=0.0.0.0" in render
+    assert "--server.port=$PORT" in render
+    assert "GEMINI_API_KEY" in render and "sync: false" in render
+    assert "GROQ_API_KEY" in render and "sync: false" in render
+    assert "GROQ_MODEL" in render
+    assert "port =" not in streamlit_config
+
+
 def test_required_runtime_catalogue_files_are_not_ignored():
     catalogue = ROOT / "sources" / "catalogue.json"
     source_readme = ROOT / "sources" / "README.md"

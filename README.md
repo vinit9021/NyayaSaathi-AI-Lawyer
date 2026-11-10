@@ -27,10 +27,42 @@ For the existing installed environment, run only the final command. Open the loc
 ## Hugging Face Docker Space deployment
 
 The production container is defined in [Dockerfile](Dockerfile), binds
-Streamlit to `0.0.0.0:7860`, and includes the reviewed catalogue under
+Streamlit to `0.0.0.0:7860` for Hugging Face, and includes the reviewed catalogue under
 [`sources/`](sources/). Space metadata and the separate Space-repository
 copy workflow are documented in [deployment/README.md](deployment/README.md);
 the root GitHub README remains the project documentation.
+
+## Render native Python web service
+
+Render should use a **Web Service** with the native Python runtime, not the
+Dockerfile. The checked-in [render.yaml](render.yaml) contains the equivalent
+configuration:
+
+- **Build command:** `pip install -r requirements.txt`
+- **Start command:** `streamlit run app.py --server.address=0.0.0.0 --server.port=$PORT --server.headless=true`
+
+The start command uses Render's platform-provided `PORT`; the shared
+[Streamlit config](.streamlit/config.toml) intentionally does not hardcode a
+port. The Dockerfile's `7860` remains isolated to Hugging Face Docker Spaces
+and is not used by this native Render service.
+
+In the Render service's environment settings, add these variables without
+committing their values:
+
+| Variable | Required value |
+| --- | --- |
+| `GEMINI_API_KEY` | Google AI Studio API key |
+| `GEMINI_MODEL` | An account-available structured-output Gemini model |
+| `GROQ_API_KEY` | Groq API key for browser microphone transcription |
+| `GROQ_MODEL` | `whisper-large-v3-turbo` |
+| `APP_MODE` | `production` |
+| `LLM_PROVIDER` | `gemini` |
+
+Render does not need Streamlit secrets or a committed `.env`. The application
+automatically uses Gemini in production, with no simulation/mode selector.
+Text, voice transcription with confirmation, curated legal grounding, case
+summaries, editable drafts, and safety boundaries remain unchanged. Do not
+deploy or make live provider calls as part of configuration verification.
 
 ### Offline test fixtures
 
