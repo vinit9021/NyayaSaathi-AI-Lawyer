@@ -60,7 +60,7 @@ def test_hindi_rental_flow_and_evidence():
 
 
 def test_missing_credentials_friendly_no_fake_fallback(monkeypatch):
-    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings())
+    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(app_mode='development'))
     app = AppTest.from_file(APP).run()
     app.selectbox(key="mode").select("Gemini").run()
     assert not app.exception and app.chat_input[0].disabled
@@ -69,7 +69,7 @@ def test_missing_credentials_friendly_no_fake_fallback(monkeypatch):
 
 
 def test_configured_gemini_still_requires_consent(monkeypatch):
-    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(gemini_api_key="synthetic", gemini_model="test"))
+    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(app_mode='development', gemini_api_key="synthetic", gemini_model="test"))
     forbidden = Mock(side_effect=AssertionError("must not construct SDK"))
     monkeypatch.setattr("nyayasaathi.llm.gemini.genai.Client", forbidden)
     app = AppTest.from_file(APP).run()
@@ -96,7 +96,7 @@ def test_two_ui_sessions_do_not_share_data():
 
 
 def test_switching_modes_clears_case_context(monkeypatch):
-    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings())
+    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(app_mode='development'))
     app = start_simulation()
     app.chat_input[0].set_value("online refund").run()
     app.selectbox(key="mode").select("Gemini").run()
@@ -173,7 +173,7 @@ def test_draft_edit_injection_cannot_export_or_modify_facts():
 
 
 def test_draft_sessions_and_mode_reset_are_isolated(monkeypatch):
-    monkeypatch.setattr('nyayasaathi.config.load_streamlit_settings', lambda **_: Settings())
+    monkeypatch.setattr('nyayasaathi.config.load_streamlit_settings', lambda **_: Settings(app_mode='development'))
     first = start_simulation()
     first.chat_input[0].set_value('online refund').run()
     button(first, 'Confirm entered details / दर्ज जानकारी की पुष्टि').click().run()

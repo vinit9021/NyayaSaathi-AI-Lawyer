@@ -6,13 +6,17 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def offline_environment(monkeypatch, tmp_path):
+def offline_environment(monkeypatch, tmp_path, request):
     for name in (
         "GEMINI_API_KEY", "GOOGLE_API_KEY", "GROQ_API_KEY", "GEMINI_MODEL",
         "LLM_PROVIDER", "LLM_TIMEOUT_SECONDS", "LLM_MAX_RETRIES",
-        "LLM_MAX_OUTPUT_TOKENS",
+        "LLM_MAX_OUTPUT_TOKENS", "APP_MODE", "GROQ_MODEL", "SPEECH_TIMEOUT_SECONDS",
     ):
         monkeypatch.delenv(name, raising=False)
+    if request.path.name in {'test_ui.py', 'test_gemini_ui_pipeline.py', 'test_intake_variations.py'}:
+        monkeypatch.setenv('APP_MODE', 'development')
+        from nyayasaathi.config import Settings
+        monkeypatch.setattr('nyayasaathi.config.load_streamlit_settings', lambda **_: Settings(app_mode='development'))
     monkeypatch.chdir(tmp_path)
 
     def blocked(*args, **kwargs):

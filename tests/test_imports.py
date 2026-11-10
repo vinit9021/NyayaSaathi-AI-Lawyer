@@ -33,10 +33,13 @@ def test_project_and_streamlit_configuration_parse():
         assert tomllib.load(file)["browser"]["gatherUsageStats"] is False
 
 
-def test_foundation_entrypoint_renders_without_keys():
+def test_foundation_entrypoint_renders_without_keys(monkeypatch):
     from streamlit.testing.v1 import AppTest
+    from nyayasaathi.config import Settings
+    monkeypatch.setattr('nyayasaathi.config.load_streamlit_settings', lambda **_: Settings())
     app = AppTest.from_file(str(ROOT / "app.py")).run()
     assert not app.exception
     assert app.title[0].value == "NyayaSaathi"
-    assert "not available yet" in app.info[0].value
-    assert len(app.chat_input) == 0
+    assert any("Voice is not configured" in item.value for item in app.info)
+    assert app.chat_input[0].disabled
+    assert len(app.chat_input) == 1

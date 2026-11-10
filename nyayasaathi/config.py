@@ -19,15 +19,22 @@ class ConfigurationError(ValueError):
 
 @dataclass(frozen=True)
 class Settings:
+    app_mode: str = "production"
     llm_provider: str = "gemini"
     gemini_model: str | None = None
     gemini_api_key: str | None = field(default=None, repr=False)
     groq_api_key: str | None = field(default=None, repr=False)
+    groq_model: str = "whisper-large-v3-turbo"
+    speech_timeout_seconds: int = 30
     llm_timeout_seconds: int = 30
     llm_max_retries: int = 1
     llm_max_output_tokens: int = 2048
 
     def __post_init__(self) -> None:
+        if self.app_mode not in {"production", "development"}:
+            raise ConfigurationError("APP_MODE must be production or development.")
+        if not isinstance(self.groq_model, str) or not self.groq_model.strip():
+            raise ConfigurationError("GROQ_MODEL must be non-empty text.")
         if not isinstance(self.llm_provider, str) or not self.llm_provider.strip():
             raise ConfigurationError("LLM_PROVIDER must be non-empty text.")
         for name in ("gemini_model", "gemini_api_key", "groq_api_key"):
@@ -35,6 +42,7 @@ class Settings:
             if value is not None and (not isinstance(value, str) or not value.strip()):
                 raise ConfigurationError(f"{name.upper()} must be non-empty text or unset.")
         for name, lower, upper in (
+            ("speech_timeout_seconds", 1, 60),
             ("llm_timeout_seconds", 1, 90),
             ("llm_max_retries", 0, 1),
             ("llm_max_output_tokens", 1, 8192),
@@ -95,10 +103,13 @@ def load_settings(
     if provider is None:
         raise ConfigurationError("LLM_PROVIDER must be non-empty text.")
     return Settings(
+        app_mode=text("APP_MODE", "production"),
         llm_provider=provider,
         gemini_model=text("GEMINI_MODEL"),
         gemini_api_key=text("GEMINI_API_KEY"),
         groq_api_key=text("GROQ_API_KEY"),
+        groq_model=text("GROQ_MODEL", "whisper-large-v3-turbo"),
+        speech_timeout_seconds=integer("SPEECH_TIMEOUT_SECONDS", 30),
         llm_timeout_seconds=integer("LLM_TIMEOUT_SECONDS", 30),
         llm_max_retries=integer("LLM_MAX_RETRIES", 1),
         llm_max_output_tokens=integer("LLM_MAX_OUTPUT_TOKENS", 2048),

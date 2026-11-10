@@ -4,6 +4,7 @@ from hashlib import sha256
 from pathlib import Path
 from uuid import uuid4
 import streamlit as st
+import re
 
 from nyayasaathi.config import ConfigurationError, Settings, load_streamlit_settings
 from nyayasaathi.conversation import FIELDS, OPTIONAL_FIELDS, evidence_checklist, localize, unanswered_fields
@@ -14,6 +15,7 @@ from nyayasaathi.models import CaseState
 from nyayasaathi.retrieval import CatalogueError, load_catalogue, retrieve
 from nyayasaathi.safety import ground_claims
 from nyayasaathi.drafting import LABELS, NOTICE, create_draft, download_bytes, fingerprint, require_safe_case
+from nyayasaathi.speech import GroqSpeech, VoiceState, MESSAGES, SpeechError, transcribe_once, consume_transcript
 
 ROOT = Path(__file__).resolve().parent
 BUILD = sha256(b''.join(path.read_bytes() for path in
@@ -22,9 +24,44 @@ BUILD = sha256(b''.join(path.read_bytes() for path in
 
 def reset_case(language):
     for key in list(st.session_state):
-        if key.startswith(('fact_', 'draft_')) or key in {'case', 'live_consent'}:
+        if key.startswith(('fact_', 'draft_', 'voice_')) or key in {'case', 'live_consent', 'voice'}:
             del st.session_state[key]
     st.session_state.case = CaseState(language=language)
+
+
+def render_voice(settings, state, client, catalogue):
+    with st.expander('Speak your problem / अपनी समस्या बोलें', expanded=False):
+        st.caption('Record up to 60 seconds. If the microphone is unavailable, allow browser microphone access on HTTPS/localhost, or type instead.')
+        st.caption('Groq processes audio; Google processes only the transcript you review and submit. Fictional data only. Provider retention policies apply.')
+        available = settings is not None and bool(settings.groq_api_key)
+        if not available:
+            st.info('Voice is not configured yet. Text chat remains available.')
+        consent = st.checkbox('Allow Groq to transcribe my fictional recording / काल्पनिक ऑडियो भेजने की अनुमति', key='voice_consent')
+        voice = st.session_state.get('voice', VoiceState())
+        revision = st.session_state.get('voice_revision', 0)
+        recording = st.audio_input('Record in English, Hindi or Hinglish', sample_rate=16000,
+                                   key=f'voice_recording_{revision}', disabled=not available or not consent)
+        if st.button('Transcribe recording / ऑडियो से टेक्स्ट', key='voice_transcribe',
+                     disabled=recording is None or not available or not consent or state.blocked is not None or len(state.processed_ids) >= 20):
+            with st.spinner('Transcribing your recording…'):
+                st.session_state.voice = transcribe_once(voice, recording.getvalue(), GroqSpeech(settings), consent=consent)
+            st.session_state.voice_revision = revision + 1  # Release the audio widget on rerun.
+            st.rerun()
+        if voice.error:
+            st.warning(MESSAGES[voice.error])
+        if voice.pending_id:
+            edited = st.text_area('Review transcript / टेक्स्ट जाँचें', value=voice.transcript,
+                                  key='voice_edit_' + voice.pending_id, max_chars=4000)
+            st.caption('Correct names, dates, amounts and places. Nothing reaches the legal assistant until you submit below.')
+            if st.button('Use reviewed transcript / जाँचा टेक्स्ट भेजें', key='voice_send',
+                         disabled=client is None or state.blocked is not None or len(state.processed_ids) >= 20):
+                try:
+                    consumed, text, submission_id = consume_transcript(voice, edited)
+                    st.session_state.voice = consumed  # Consume before model call; reruns cannot resubmit.
+                    st.session_state.case = process_turn(state, text, submission_id, client, catalogue)
+                    st.rerun()
+                except SpeechError as error:
+                    st.warning(str(error))
 
 
 def render_sources(state, catalogue):
@@ -118,16 +155,24 @@ def render_draft(state):
 def main():
     st.set_page_config(page_title='NyayaSaathi', page_icon='⚖️')
     st.title('NyayaSaathi')
-    st.caption('Application build: ' + BUILD + ' • Intake contract: ' + INTAKE_VERSION)
-    if st.session_state.get('app_build', BUILD) != BUILD:
-        st.warning('Application updated. Your session facts remain; review them or start a New case before retesting.')
-    st.session_state.app_build = BUILD
+    settings = None
+    config_error = None
+    try:
+        settings = load_streamlit_settings(dotenv_path=ROOT / '.env')
+    except ConfigurationError:
+        config_error = 'The service is not configured correctly. Please try again later.'
+    development = settings is not None and settings.app_mode == 'development'
+    if development:
+        st.caption('Application build: ' + BUILD + ' • Intake contract: ' + INTAKE_VERSION)
+        if st.session_state.get('app_build', BUILD) != BUILD:
+            st.warning('Application updated. Your session facts remain; review them or start a New case before retesting.')
+        st.session_state.app_build = BUILD
     preference = st.selectbox('Response language / जवाब की भाषा', ['English', 'हिन्दी'], key='language')
     language = 'hi' if preference == 'हिन्दी' else 'en'
     st.caption(localize('AI legal-information assistant, not a licensed lawyer. Information may be incomplete or outdated. Review drafts and consult a qualified lawyer for advice or urgent matters.',
                         'AI कानूनी-जानकारी सहायक, लाइसेंस प्राप्त वकील नहीं। जानकारी अधूरी या पुरानी हो सकती है। मसौदा जाँचें और सलाह या तात्कालिक मामलों में योग्य वकील से मिलें।', language))
     st.caption('Online shopping complaints and rental deposits only. Fictional examples only; no private case data. / केवल काल्पनिक खरीदारी और जमा राशि के मामले।')
-    mode = st.selectbox('Mode / तरीका', ['Choose mode', 'Offline simulation', 'Gemini'], key='mode')
+    mode = st.selectbox('Mode / तरीका', ['Choose mode', 'Offline simulation', 'Gemini'], key='mode') if development else 'Gemini'
     if st.session_state.get('active_mode') != mode:
         reset_case(language)
         st.session_state.active_mode = mode
@@ -139,35 +184,41 @@ def main():
     state = replace(st.session_state.case, language=language)
     st.session_state.case = state
     if mode == 'Choose mode':
-        st.info('Choose a mode to begin. Voice input is not available yet.')
+        st.info('Choose a development mode to begin.')
         return
     client = None
     if mode == 'Offline simulation':
         st.warning('OFFLINE SIMULATION / ऑफलाइन अनुकरण — deterministic rules, not live AI. No API requests. Limited language understanding.')
         client = create_llm_client(Settings(llm_provider='simulation'))
     else:
-        st.info('Gemini sends submitted text and case context to Google. Session-only app storage; provider policies still apply.')
-        consent = st.checkbox('I permit live Gemini requests using fictional data / काल्पनिक डेटा से Gemini अनुरोध की अनुमति', key='live_consent')
+        st.caption('By submitting, you allow Google to process fictional text and case context. Audio goes to Groq only with permission. No app-side permanent case storage; provider policies still apply.')
+        consent = st.checkbox('I permit live Gemini requests using fictional data / काल्पनिक डेटा से Gemini अनुरोध की अनुमति', key='live_consent') if development else True
         try:
-            settings = load_streamlit_settings(dotenv_path=ROOT / '.env')
+            if settings is None:
+                raise ConfigurationError(config_error or 'Service unavailable.')
             settings.require_gemini()
             if settings.llm_provider != 'gemini':
                 raise ConfigurationError('Gemini mode requires LLM_PROVIDER=gemini.')
             if consent:
                 client = create_llm_client(settings, allow_live=True)
         except ConfigurationError as error:
-            st.warning(str(error) + ' Offline simulation can be selected explicitly; no fallback occurs.')
+            st.warning((str(error) + ' Offline simulation can be selected explicitly; no fallback occurs.') if development else
+                       'The AI service is unavailable. Please try again later. Your existing case remains visible.')
     try:
         catalogue = load_catalogue()
     except CatalogueError:
         catalogue = ()
         st.warning('Sources unavailable. Legal claims disabled; neutral requests do not establish rights.')
+    render_voice(settings, state, client, catalogue)
     for message in state.history:
         with st.chat_message(message.role):
-            st.text(message.content)
+            visible = message.content
+            if not development and message.role == 'assistant':
+                visible = re.sub(r' \[(?:intake_shape|fact_shape|fact_provenance|intake_internal)\]', '', visible)
+            st.text(visible)
     if state.blocked:
         st.error('This case needs qualified legal help. Start a new case only for a separate supported issue.')
-    if state.last_result and getattr(state.last_result, 'issues', ()):
+    if development and state.last_result and getattr(state.last_result, 'issues', ()):
         with st.expander('Intake checks / जानकारी की जाँच'):
             st.caption('Unverified fields were omitted. No raw conversation or model output is logged.')
             st.table([{'Field': issue.field or 'Unknown field', 'Check': issue.code}

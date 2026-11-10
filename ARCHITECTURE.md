@@ -1,6 +1,6 @@
 # NyayaSaathi architecture
 
-Status: Milestones 1–4 implemented; voice/evaluation/deployment remain planned.
+Status: Milestones 1–5 implemented; live voice, evaluation and deployment verification are tracked in the plan.
 See PROJECT_REQUIREMENTS.md for scope and acceptance requirements.
 One Python 3.12 Streamlit application, small pure-Python business modules, and
 two external providers. No database, background workers, or vector index.
@@ -156,6 +156,16 @@ refund, that all users qualify for legal aid, or that a requested response date
 is a statutory deadline.
 
 ## Security and document boundaries
+
+Production is the default (`APP_MODE=production`) and creates only the configured
+Gemini adapter. Simulation/provider controls and diagnostic codes are visible only
+in explicit development mode. Reviewers supply neither keys nor a login.
+Groq uses a configurable `GROQ_MODEL`, bounded timeout, and zero automatic retries.
+`VoiceState` holds transcript and recording digests, not audio bytes. A recording is
+consumed once; after editing, the transcript uses a stable submission ID through
+the existing engine. Audio widget state is rotated after transcription, and New
+case clears voice state. Session limits: 10 recordings, 20 legal submissions,
+60 seconds / 5 MB per recording. No server file writes occur in the voice path.
 
 User text, transcripts, catalogue excerpts, and model outputs are data, never
 instructions to execute code, change policy, fetch URLs, or reveal secrets.

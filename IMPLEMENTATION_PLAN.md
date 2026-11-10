@@ -1,6 +1,7 @@
 # NyayaSaathi implementation plan
 
-Progress: Milestones 1–4 implemented; Milestones 5–7 remain planned. Commands below
+Progress: Milestones 1–5 implemented and offline-tested. Live voice verification,
+evaluation artifacts, and public deployment/submission verification remain in progress. Commands below
 document the roadmap and executed checks. PROJECT_REQUIREMENTS.md defines scope; ARCHITECTURE.md defines module
 boundaries. Complete a narrow vertical slice before polishing the UI.
 
@@ -107,6 +108,14 @@ are downloadable but never sent. User can correct date/amount/name before use.
 ```
 
 ### 5. Voice and failure handling (about 45 minutes)
+
+Implemented: in-memory bounded PCM WAV validation, Groq SDK transcription without
+a language hint, one-time audio consent, editable transcript with explicit send,
+recording and submission deduplication, and safe error messages. Production UI
+automatically selects the configured live provider; development mode alone exposes
+simulation. 432 offline tests passed at this checkpoint. Live Groq and physical
+microphone validation remain pending credentials/authorization; do not infer them
+from mocks. Text remains independent of voice availability.
 
 Add `st.audio_input`, consent before transcription, Groq Turbo adapter, editable
 pending transcript, explicit send confirmation, bounds, and clear error states.

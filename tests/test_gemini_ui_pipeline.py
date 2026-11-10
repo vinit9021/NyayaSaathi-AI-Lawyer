@@ -29,6 +29,7 @@ def run_ui(monkeypatch, response, text):
     sdk.models.generate_content.return_value = response
     monkeypatch.setattr('nyayasaathi.llm.gemini.genai.Client', Mock(return_value=sdk))
     monkeypatch.setattr('nyayasaathi.config.load_streamlit_settings', lambda **_: Settings(
+        app_mode='development',
         gemini_api_key='synthetic-only', gemini_model='configured-test-model', llm_max_retries=0))
     app = AppTest.from_file(APP, default_timeout=10).run()
     app.selectbox(key='mode').select('Gemini').run()
