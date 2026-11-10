@@ -4,7 +4,7 @@ from dataclasses import asdict, replace
 from datetime import date
 import json
 
-from nyayasaathi.extraction import EXTRACTION_SCHEMA, merge_proposals, parse_extraction, preserve_intake_details
+from nyayasaathi.extraction import EXTRACTION_SCHEMA, ExtractionError, merge_proposals, parse_extraction, preserve_intake_details
 from nyayasaathi.llm.base import LLMClient, LLMError, LLMErrorCode
 from nyayasaathi.models import CaseState, LegalSource, LLMRequest, Message, SafetyDecision, TurnResult
 from nyayasaathi.retrieval import retrieve
@@ -48,6 +48,7 @@ Extract only facts stated in the CURRENT message, including corrections. Copy va
 verbatim quote in that message, never normalize dates/money, infer state from city, or invent facts.
 Use null only where the user explicitly says a field is unknown/unavailable. Omit unstated fields.
 Existing confirmed/proposed facts are context, not new evidence. Return only the requested JSON schema.
+For problem, copy a short original passage for BOTH value and quote; never summarize or paraphrase it.
 Include the product and what happened in problem; include seller replies/refusals in contact_attempts.
 Capture every stated evidence item. Do not omit a stated detail merely because another field overlaps it.
 """
@@ -157,9 +158,13 @@ def process_turn(state: CaseState, text: str, submission_id: str, client: LLMCli
         message = str(exc) if state.language == "en" else "मॉडल अनुरोध पूरा नहीं हुआ। सेटिंग/कोटा जाँचें या बाद में प्रयास करें। पिछली पुष्टि की गई जानकारी सुरक्षित है।"
         result = TurnResult(message, SafetyDecision(state.topic, "clarify", ("provider_error",), message), error=exc.code.value)
         return _finish(state, text, submission_id, result)
-    except Exception:
+    except Exception as exc:
         message = localize("The intake response could not be validated. Confirmed facts were preserved; please try again.",
                            "मॉडल की जानकारी जाँची नहीं जा सकी। पुष्टि किए तथ्य सुरक्षित हैं; फिर प्रयास करें।", state.language)
+        # A static code distinguishes schema/provenance failures without logging
+        # private input, raw model output, SDK objects, or exception messages.
+        diagnostic = exc.code if isinstance(exc, ExtractionError) else "intake_internal"
+        message += f" [{diagnostic}]"
         return _finish(state, text, submission_id, TurnResult(message,
                        SafetyDecision(state.topic, "clarify", ("invalid_response",), message), error=LLMErrorCode.INVALID_RESPONSE.value))
     decision = assess_request(text, confirmed_topic=extraction.topic,

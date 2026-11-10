@@ -83,6 +83,39 @@ Memory is session-only: at most 20 submissions and 40 retained messages, plus fa
 
 ## Offline verification
 
+Live intake diagnostic (10 November 2026): the real Streamlit Gemini path
+intermittently rejected valid JSON when the model paraphrased a `problem` value
+despite providing an exact user quote. The parser previously rejected the whole
+turn, including valid amounts. Simulation emitted literal values and did not
+exercise this mismatch. The parser now discards the problem paraphrase and uses
+only its exact, short current-message quote as an **unconfirmed** assertion.
+Other fields still require literal provenance; invented quotes remain rejected.
+Empty null placeholders are omitted, never marked as answered. The requested
+schema now specifies nonempty quotes and the existing 500-character value limit.
+No SDK, model, API key, or legal-source enforcement was changed.
+
+Validation failures display only static diagnostic codes (`intake_shape`,
+`fact_shape`, `fact_provenance`, or `intake_internal`), never raw provider errors
+or private content. Recovery is local and makes no additional model requests.
+Use New case when retesting after a restart. To restart the local app, stop its
+PowerShell process with Ctrl+C, then run
+`.\.venv\Scripts\python.exe -m streamlit run app.py` from the repository root.
+Select Gemini and consent to synthetic testing; simulation is a separate mode.
+
+The six authorized diagnostic calls used `gemini-3.5-flash-lite`, 2,048 maximum
+output tokens, a 90-second timeout and zero retries. Initial A/B/C UI tests all
+passed; the English rental rerun reproduced the provenance failure. Raw fictional
+outputs remain unchanged in ignored `tmp/gemini-ui-*` directories. Offline UI
+regressions exercise the actual factory and Gemini adapter with only the SDK
+transport mocked; they do not prove final live verification.
+
+After the provenance fix, one separately approved seventh request succeeded
+through Streamlit's real Gemini path in 3.664 seconds (342 input / 150 output
+tokens). It extracted the INR 20000 deposit, asked for the missing state, and
+rendered only approved catalogue claims with rental-law uncertainty. State
+survived a UI rerun without another request. The full offline suite passed
+313 tests. This is narrow synthetic verification, not a guarantee for all inputs.
+
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_extraction.py tests/test_conversation.py tests/test_llm.py -q
 .\.venv\Scripts\python.exe -m pytest tests/test_ui.py -q

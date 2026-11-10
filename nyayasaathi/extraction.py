@@ -24,8 +24,8 @@ EXTRACTION_SCHEMA = {
             "required": ["name", "value", "quote"],
             "properties": {
                 "name": {"type": "string", "enum": list(CASE_FIELDS)},
-                "value": {"type": ["string", "null"]},
-                "quote": {"type": "string"},
+                "value": {"type": ["string", "null"], "maxLength": 500},
+                "quote": {"type": "string", "minLength": 1},
             },
         }},
     },
@@ -41,8 +41,17 @@ def _unique_object(pairs):
     return result
 
 
+class ExtractionError(ValueError):
+    """Static diagnostic category only; never retain model output or user text."""
+
+    def __init__(self, code: str):
+        self.code = code
+        super().__init__("The intake response was invalid; confirmed facts were preserved.")
+
+
 def parse_extraction(text: str, user_text: str, turn: int) -> Extraction:
     """No prose, citations, or unquoted model inventions cross this boundary."""
+    code = "intake_shape"
     try:
         if not isinstance(text, str) or len(text) > 24000:
             raise ValueError
@@ -61,18 +70,35 @@ def parse_extraction(text: str, user_text: str, turn: int) -> Extraction:
         facts = []
         names = set()
         for row in data["facts"]:
+            code = "fact_shape"
             if not isinstance(row, dict) or set(row) != {"name", "value", "quote"}:
                 raise ValueError
+            if row["name"] not in CASE_FIELDS or row["name"] in names:
+                raise ValueError
+            names.add(row["name"])
+            # Some structured generators emit optional-field placeholders. An
+            # empty null row supplies no evidence: omit it, never mark it known.
+            # All nonempty facts still require exact current-message provenance.
+            if row["value"] is None and row["quote"] == "":
+                continue
+            # Narrative summaries are often paraphrased even under JSON schema.
+            # Discard that paraphrase, not the valid evidence: for the problem
+            # field alone use the exact short user quote as an unconfirmed claim.
+            # Do not normalize amounts/dates/names or recover invented quotes.
+            if (row["name"] == "problem" and isinstance(row["value"], str)
+                    and isinstance(row["quote"], str) and 0 < len(row["quote"]) <= 500
+                    and row["quote"] in user_text and row["value"] not in row["quote"]):
+                row = {**row, "value": row["quote"]}
             fact = CaseFact(**row, turn=turn)
-            if fact.name in names or fact.quote not in user_text:
+            code = "fact_provenance"
+            if fact.quote not in user_text:
                 raise ValueError
             if fact.value is not None and fact.value not in fact.quote:
                 raise ValueError
-            names.add(fact.name)
             facts.append(fact)
         return Extraction(data["topic"], float(confidence), tuple(data["risk_flags"]), tuple(facts))
     except (ValueError, TypeError, KeyError, RecursionError):
-        raise ValueError("The intake response was invalid; confirmed facts were preserved.") from None
+        raise ExtractionError(code) from None
 
 
 def merge_proposals(state: CaseState, facts: tuple[CaseFact, ...]) -> CaseState:
