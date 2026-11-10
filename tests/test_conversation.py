@@ -103,8 +103,13 @@ def test_ambiguous_or_unsupported_semantics_never_gives_claims(response):
 def test_fabricated_prose_citations_and_facts_fail_transactionally(response):
     before = confirm_fact(CaseState(topic="consumer"), "amount_paid", "5000")
     after = turn(before, "online refund", FakeLLM(response))
-    assert after.facts == before.facts and after.last_result.error == "invalid_response"
-    assert not after.last_result.claims and "Section 999" not in after.history[-1].content
+    assert after.facts == before.facts
+    if 'Invented' in response.text:
+        assert not after.last_result.error and after.last_result.issues
+        assert not any(f.name == 'seller' for f in after.proposals)
+    else:
+        assert after.last_result.error == "invalid_response" and not after.last_result.claims
+    assert "Section 999" not in after.history[-1].content
 
 
 @pytest.mark.parametrize("code", list(LLMErrorCode))

@@ -69,14 +69,14 @@ def unanswered_fields(state: CaseState) -> tuple[str, ...]:
     return tuple(name for name in FIELDS.get(state.topic, ()) if name not in known)
 
 
-def follow_up_questions(state: CaseState) -> tuple[str, ...]:
+def follow_up_questions(state: CaseState, rejected: tuple[str, ...] = ()) -> tuple[str, ...]:
     index = 1 if state.language == "hi" else 0
     answered = {f.name for f in state.facts} | {f.name for f in state.proposals}
-    questions = []
+    questions = [QUESTIONS[name][index] for name in dict.fromkeys(rejected) if name in QUESTIONS]
     if state.proposals:
         questions.append(localize("Please review and confirm the proposed details below, especially any conflicts.",
                                   "नीचे प्रस्तावित जानकारी जाँचें और पुष्टि करें, खासकर विरोधी जानकारी।", state.language))
-    questions.extend(QUESTIONS[name][index] for name in FIELDS.get(state.topic, ()) if name not in answered)
+    questions.extend(QUESTIONS[name][index] for name in FIELDS.get(state.topic, ()) if name not in answered and name not in rejected)
     return tuple(questions[:2])
 
 
@@ -184,6 +184,13 @@ def process_turn(state: CaseState, text: str, submission_id: str, client: LLMCli
         return _finish(state, text, submission_id, result)
     facts = preserve_intake_details(state, extraction.facts, text, len(state.processed_ids) + 1)
     updated = merge_proposals(replace(state, topic=decision.topic), facts)
+    rejected = tuple(i.field for i in extraction.issues if i.field and i.code != "fact_absent")
+    # A rejected update cannot silently endorse a stale confirmed/proposed value.
+    # Keep prior values but require explicit review before drafting/jurisdiction.
+    known = {f.name for f in state.facts + state.proposals}
+    conflicts = set(updated.conflicts) | (set(rejected) & known)
+    conflicts.update(i.field for i in extraction.issues if i.code == "fact_conflict" and i.field)
+    updated = replace(updated, conflicts=tuple(sorted(conflicts)))
     confirmed = {f.name: f.value for f in updated.facts}
     jurisdiction = confirmed.get("state") if "state" not in updated.conflicts else None
     retrieved = retrieve(catalogue, topic=updated.topic, state=jurisdiction, text=text, as_of=as_of)
@@ -194,9 +201,13 @@ def process_turn(state: CaseState, text: str, submission_id: str, client: LLMCli
     gaps = retrieved.gaps + (grounded.gaps if ids else ("no_verified_applicable_sources",))
     message = localize("Details recorded for your review. Legal information and sources are below.",
                        "जानकारी जाँच के लिए दर्ज है। कानूनी जानकारी और स्रोत नीचे हैं।", state.language)
+    if extraction.issues:
+        message = localize("I kept the supported details. Some details could not be checked; please clarify or review them.",
+                           "समर्थित जानकारी रखी गई है। कुछ जानकारी जाँची नहीं जा सकी; कृपया उसे स्पष्ट करें या जाँचें।", state.language)
     if gaps:
         message += " " + localize("I could not verify the legal position; source limitations are shown below.",
                                    "कानूनी स्थिति सत्यापित नहीं हुई; स्रोतों की सीमाएँ नीचे हैं।", state.language)
-    result = TurnResult(message, decision, follow_up_questions(updated), missing_fields(updated),
-                        evidence_checklist(updated.topic, state.language), grounded.claims, tuple(dict.fromkeys(gaps)))
+    result = TurnResult(message, decision, follow_up_questions(updated, rejected), missing_fields(updated),
+                        evidence_checklist(updated.topic, state.language), grounded.claims, tuple(dict.fromkeys(gaps)),
+                        issues=extraction.issues)
     return _finish(updated, text, submission_id, result)

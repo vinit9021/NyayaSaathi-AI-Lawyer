@@ -4,6 +4,7 @@ import json
 import time
 import math
 import random
+import re
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from collections.abc import Callable
@@ -56,10 +57,22 @@ class GeminiLLM:
             for attempt in range(self.settings.llm_max_retries + 1):
                 try:
                     raw = client.models.generate_content(model=self.settings.gemini_model, contents=contents, config=config)
+                    candidates = getattr(raw, "candidates", None)
+                    if isinstance(candidates, list):
+                        if len(candidates) != 1 or candidates[0].finish_reason != types.FinishReason.STOP:
+                            # Never salvage partial JSON or safety-filtered output,
+                            # even if its text happens to be syntactically valid.
+                            raise LLMError(LLMErrorCode.INVALID_RESPONSE)
                     text = raw.text
                     if not isinstance(text, str) or not text.strip() or len(text) > 24000:
                         raise LLMError(LLMErrorCode.INVALID_RESPONSE)
                     if request.response_format == "json":
+                        # One bounded local repair: remove only a complete JSON
+                        # fence/BOM. Never guess missing braces or make a repair call.
+                        text = text.lstrip('\ufeff').strip()
+                        fenced = re.fullmatch(r'```(?:json)?\s*\n(.*?)\n```', text, re.S)
+                        if fenced:
+                            text = fenced.group(1).strip()
                         try:
                             if not isinstance(json.loads(text), dict):
                                 raise ValueError

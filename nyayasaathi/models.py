@@ -188,11 +188,26 @@ class CaseFact:
 
 
 @dataclass(frozen=True)
+class FactIssue:
+    """Allowlisted field/code only. No private value, quote or exception body."""
+
+    field: str | None
+    code: str
+
+    def __post_init__(self):
+        if self.field is not None and self.field not in CASE_FIELDS:
+            raise ValueError("Unknown diagnostic field.")
+        if self.code not in {"fact_shape", "fact_provenance", "fact_conflict", "fact_absent"}:
+            raise ValueError("Unknown diagnostic code.")
+
+
+@dataclass(frozen=True)
 class Extraction:
     topic: str
     confidence: float
     risk_flags: tuple[str, ...]
     facts: tuple[CaseFact, ...]
+    issues: tuple[FactIssue, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -205,6 +220,7 @@ class TurnResult:
     claims: tuple[GroundedClaim, ...] = ()
     gaps: tuple[str, ...] = ()
     error: str | None = None
+    issues: tuple[FactIssue, ...] = ()
 
 
 @dataclass(frozen=True)

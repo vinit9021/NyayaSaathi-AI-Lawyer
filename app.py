@@ -8,7 +8,7 @@ import streamlit as st
 from nyayasaathi.config import ConfigurationError, Settings, load_streamlit_settings
 from nyayasaathi.conversation import FIELDS, OPTIONAL_FIELDS, evidence_checklist, localize, unanswered_fields
 from nyayasaathi.conversation import process_turn
-from nyayasaathi.extraction import confirm_facts
+from nyayasaathi.extraction import INTAKE_VERSION, confirm_facts
 from nyayasaathi.llm.factory import create_llm_client
 from nyayasaathi.models import CaseState
 from nyayasaathi.retrieval import CatalogueError, load_catalogue, retrieve
@@ -16,6 +16,8 @@ from nyayasaathi.safety import ground_claims
 from nyayasaathi.drafting import LABELS, NOTICE, create_draft, download_bytes, fingerprint, require_safe_case
 
 ROOT = Path(__file__).resolve().parent
+BUILD = sha256(b''.join(path.read_bytes() for path in
+                       [ROOT / 'app.py', *sorted((ROOT / 'nyayasaathi').rglob('*.py'))])).hexdigest()[:10]
 
 
 def reset_case(language):
@@ -116,6 +118,10 @@ def render_draft(state):
 def main():
     st.set_page_config(page_title='NyayaSaathi', page_icon='⚖️')
     st.title('NyayaSaathi')
+    st.caption('Application build: ' + BUILD + ' • Intake contract: ' + INTAKE_VERSION)
+    if st.session_state.get('app_build', BUILD) != BUILD:
+        st.warning('Application updated. Your session facts remain; review them or start a New case before retesting.')
+    st.session_state.app_build = BUILD
     preference = st.selectbox('Response language / जवाब की भाषा', ['English', 'हिन्दी'], key='language')
     language = 'hi' if preference == 'हिन्दी' else 'en'
     st.caption(localize('AI legal-information assistant, not a licensed lawyer. Information may be incomplete or outdated. Review drafts and consult a qualified lawyer for advice or urgent matters.',
@@ -161,6 +167,11 @@ def main():
             st.text(message.content)
     if state.blocked:
         st.error('This case needs qualified legal help. Start a new case only for a separate supported issue.')
+    if state.last_result and getattr(state.last_result, 'issues', ()):
+        with st.expander('Intake checks / जानकारी की जाँच'):
+            st.caption('Unverified fields were omitted. No raw conversation or model output is logged.')
+            st.table([{'Field': issue.field or 'Unknown field', 'Check': issue.code}
+                      for issue in state.last_result.issues])
     if state.topic in FIELDS:
         st.subheader('Case summary / मामले का सार')
         st.caption('Your assertions, not independently proven facts. / आपके कथन, स्वतंत्र रूप से सिद्ध तथ्य नहीं।')

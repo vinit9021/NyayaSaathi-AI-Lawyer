@@ -5,16 +5,19 @@ from datetime import date
 import json
 import math
 import re
+import unicodedata
+from decimal import Decimal
 
-from nyayasaathi.models import CASE_FIELDS, CaseFact, CaseState, Extraction, Message
+from nyayasaathi.models import CASE_FIELDS, CaseFact, CaseState, Extraction, FactIssue, Message
 from nyayasaathi.retrieval import normalize_state
 from nyayasaathi.safety import assess_request
 
 TOPICS = ("consumer", "rental_deposit", "unclear", "unsupported")
 RISKS = ("danger", "urgent", "court_proceedings", "criminal", "complex_property", "family", "other_high_risk")
+INTAKE_VERSION = "2"
 EXTRACTION_SCHEMA = {
     "type": "object", "additionalProperties": False,
-    "required": ["topic", "confidence", "risk_flags", "facts"],
+    "required": ["topic", "confidence", "risk_flags"],
     "properties": {
         "topic": {"type": "string", "enum": list(TOPICS)},
         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
@@ -24,8 +27,8 @@ EXTRACTION_SCHEMA = {
             "required": ["name", "value", "quote"],
             "properties": {
                 "name": {"type": "string", "enum": list(CASE_FIELDS)},
-                "value": {"type": ["string", "null"], "maxLength": 500},
-                "quote": {"type": "string", "minLength": 1},
+                "value": {"type": ["string", "null"], "minLength": 1, "maxLength": 500},
+                "quote": {"type": "string", "minLength": 1, "maxLength": 4000},
             },
         }},
     },
@@ -50,13 +53,13 @@ class ExtractionError(ValueError):
 
 
 def parse_extraction(text: str, user_text: str, turn: int) -> Extraction:
-    """No prose, citations, or unquoted model inventions cross this boundary."""
-    code = "intake_shape"
+    """Validate safety envelope atomically, then quarantine individual bad fields."""
     try:
         if not isinstance(text, str) or len(text) > 24000:
             raise ValueError
         data = json.loads(text, object_pairs_hook=_unique_object)
-        if not isinstance(data, dict) or set(data) != {"topic", "confidence", "risk_flags", "facts"}:
+        required = {"topic", "confidence", "risk_flags"}
+        if not isinstance(data, dict) or not required <= set(data) or set(data) - required - {"facts"}:
             raise ValueError
         if data["topic"] not in TOPICS:
             raise ValueError
@@ -65,40 +68,127 @@ def parse_extraction(text: str, user_text: str, turn: int) -> Extraction:
             raise ValueError
         if not isinstance(data["risk_flags"], list) or any(r not in RISKS for r in data["risk_flags"]):
             raise ValueError
-        if not isinstance(data["facts"], list) or len(data["facts"]) > len(CASE_FIELDS):
+        rows = data.get("facts", [])
+        if not isinstance(rows, list) or len(rows) > len(CASE_FIELDS):
             raise ValueError
-        facts = []
-        names = set()
-        for row in data["facts"]:
-            code = "fact_shape"
-            if not isinstance(row, dict) or set(row) != {"name", "value", "quote"}:
-                raise ValueError
-            if row["name"] not in CASE_FIELDS or row["name"] in names:
-                raise ValueError
-            names.add(row["name"])
-            # Some structured generators emit optional-field placeholders. An
-            # empty null row supplies no evidence: omit it, never mark it known.
-            # All nonempty facts still require exact current-message provenance.
-            if row["value"] is None and row["quote"] == "":
-                continue
-            # Narrative summaries are often paraphrased even under JSON schema.
-            # Discard that paraphrase, not the valid evidence: for the problem
-            # field alone use the exact short user quote as an unconfirmed claim.
-            # Do not normalize amounts/dates/names or recover invented quotes.
-            if (row["name"] == "problem" and isinstance(row["value"], str)
-                    and isinstance(row["quote"], str) and 0 < len(row["quote"]) <= 500
-                    and row["quote"] in user_text and row["value"] not in row["quote"]):
-                row = {**row, "value": row["quote"]}
-            fact = CaseFact(**row, turn=turn)
-            code = "fact_provenance"
-            if fact.quote not in user_text:
-                raise ValueError
-            if fact.value is not None and fact.value not in fact.quote:
-                raise ValueError
-            facts.append(fact)
-        return Extraction(data["topic"], float(confidence), tuple(data["risk_flags"]), tuple(facts))
     except (ValueError, TypeError, KeyError, RecursionError):
-        raise ExtractionError(code) from None
+        raise ExtractionError("intake_shape") from None
+    facts = {}
+    issues = []
+    seen = {}
+    rejected = set()
+    for row in rows:
+        name = row.get("name") if isinstance(row, dict) else None
+        name = name if isinstance(name, str) and name in CASE_FIELDS else None
+        if name is not None and name in seen:
+            if row == seen[name]:  # Identical copies carry no additional evidence.
+                continue
+            # Lists of evidence/communications may legitimately be emitted as
+            # separate rows. Combine only independently validated, exact quotes
+            # into their ORIGINAL contiguous user passage, never model prose.
+            if name in {"evidence", "contact_attempts"} and name in facts and name not in rejected:
+                try:
+                    additional = _parse_fact(row, user_text, turn)
+                    previous = facts[name]
+                    start = min(user_text.index(previous.quote), user_text.index(additional.quote))
+                    end = max(user_text.index(previous.quote) + len(previous.quote),
+                              user_text.index(additional.quote) + len(additional.quote))
+                    passage = user_text[start:end]
+                    if len(passage) <= 500:
+                        facts[name] = CaseFact(name, passage, passage, turn)
+                        continue
+                except (ExtractionError, ValueError):
+                    pass
+            facts.pop(name, None)
+            rejected.add(name)
+            issues.append(FactIssue(name, "fact_conflict"))
+            continue
+        if name is not None:
+            seen[name] = row
+        try:
+            fact = _parse_fact(row, user_text, turn)
+            if fact.name not in rejected:
+                facts[fact.name] = fact
+        except ExtractionError as error:
+            issues.append(FactIssue(name, error.code))
+    return Extraction(data["topic"], float(confidence), tuple(data["risk_flags"]),
+                      tuple(facts.values()), tuple(dict.fromkeys(issues)))
+
+
+MONEY_FIELDS = {"amount_paid", "refund_amount", "deposit_paid", "deposit_returned"}
+NARRATIVE_FIELDS = {"problem", "evidence", "contact_attempts", "desired_outcome", "deductions", "agreement"}
+# Do not strip arbitrary commas: only valid Indian/Western grouping is harmless.
+_NUMBER = r"(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]{1,2}(?:,[0-9]{2})*,[0-9]{3}|[0-9]+)(?:\.[0-9]{1,2})?"
+_MONEY = rf"(?:(?:INR|Rs\.?|₹)\s*)?{_NUMBER}"
+
+
+def _money_value(value: str) -> Decimal | None:
+    if not re.fullmatch(_MONEY, value, re.I):
+        return None
+    return Decimal(re.sub(r"^(?:INR|Rs\.?|₹)\s*", "", value, flags=re.I).replace(",", ""))
+
+
+def _literal_span(value: str, text: str) -> str | None:
+    """Whitespace-only equivalence, returning ORIGINAL user characters.
+
+    No case folding, translation, punctuation removal, fuzzy matching or numeric
+    substring matches. Word boundaries avoid 'paid' inside 'unpaid'.
+    """
+    if not isinstance(value, str) or not value.strip():
+        return None
+    pattern = r"\s+".join(re.escape(part) for part in value.split())
+    def wordish(character):
+        return character == '_' or unicodedata.category(character)[0] in {'L', 'M', 'N'}
+    for found in re.finditer(pattern, text):
+        if ((found.start() == 0 or not wordish(text[found.start() - 1]))
+                and (found.end() == len(text) or not wordish(text[found.end()]))):
+            return found.group()
+    return None
+
+
+def _parse_fact(row: object, user_text: str, turn: int) -> CaseFact:
+    if (not isinstance(row, dict) or set(row) != {"name", "value", "quote"}
+            or not isinstance(row["name"], str) or row["name"] not in CASE_FIELDS):
+        raise ExtractionError("fact_shape")
+    name, value, quote = row["name"], row["value"], row["quote"]
+    if value is None:
+        # A model-null is not proof the user said 'unknown'. Keep it unanswered;
+        # the user can explicitly mark unknown in the review form.
+        raise ExtractionError("fact_absent")
+    if name in MONEY_FIELDS and type(value) is int and 0 <= value <= 10**15:
+        value = str(value)  # Accept only when an equal, unambiguous user token exists.
+    if (not isinstance(value, str) or not value.strip() or len(value) > 500
+            or not isinstance(quote, str) or not quote.strip() or len(quote) > 4000):
+        raise ExtractionError("fact_shape")
+    quote = _literal_span(quote, user_text)
+    if quote is None:
+        raise ExtractionError("fact_provenance")
+    literal = _literal_span(value, quote)
+    if name in MONEY_FIELDS:
+        numeric = _money_value(value.strip())
+        tokens = re.findall(r"(?<![\w.,+/:\-])" + _MONEY + r"(?![\w,/:\-]|\.[0-9])", quote, re.I)
+        # A quote containing two sums/dates is ambiguous; ask for a narrow quote.
+        if (numeric is None or len(tokens) != 1 or _money_value(tokens[0]) != numeric
+                or re.search(r"\b(?:USD|EUR|GBP|dollars?|euros?|pounds?)\b|[$€£]", quote, re.I)):
+            raise ExtractionError("fact_provenance")
+        value = tokens[0]  # Original formatting; confirmation remains explicit.
+    elif name in NARRATIVE_FIELDS and literal is None and len(quote) <= 500:
+        value = quote  # Discard model paraphrase and preserve the user's assertion.
+    elif literal is not None:
+        value = literal
+    else:
+        raise ExtractionError("fact_provenance")
+    if name == "state" and normalize_state(value) is None:
+        raise ExtractionError("fact_provenance")
+    if name.endswith("_date") and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        try:
+            date.fromisoformat(value)
+        except ValueError:
+            raise ExtractionError("fact_provenance") from None
+    try:
+        return CaseFact(name, value, quote, turn)
+    except (ValueError, TypeError):
+        raise ExtractionError("fact_shape") from None
 
 
 def merge_proposals(state: CaseState, facts: tuple[CaseFact, ...]) -> CaseState:

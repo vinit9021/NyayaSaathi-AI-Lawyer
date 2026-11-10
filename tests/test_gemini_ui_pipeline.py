@@ -83,7 +83,8 @@ def test_invalid_facts_remain_rejected_and_confirmed_state_survives(monkeypatch,
     sdk.models.generate_content.return_value = sdk_response(payload)
     app.chat_input[0].set_value(text).run()
     assert not app.exception
-    assert app.session_state.case.last_result.error == 'invalid_response'
+    assert not app.session_state.case.last_result.error
+    assert app.session_state.case.last_result.issues
     assert app.session_state.case.facts == confirmed.facts
     assert app.session_state.case.proposals == confirmed.proposals
 
@@ -93,8 +94,9 @@ def test_duplicate_placeholder_cannot_hide_a_duplicate_fact():
     payload = {'topic': 'consumer', 'confidence': .95, 'risk_flags': [], 'facts': [
         {'name': 'amount_paid', 'value': None, 'quote': ''},
         {'name': 'amount_paid', 'value': '4500', 'quote': '4500'}]}
-    with pytest.raises(ValueError):
-        parse_extraction(json.dumps(payload), '4500', 1)
+    result = parse_extraction(json.dumps(payload), '4500', 1)
+    assert not result.facts
+    assert any(i.code == 'fact_conflict' for i in result.issues)
 
 
 def test_paraphrased_problem_recovers_only_exact_user_quote(monkeypatch):
@@ -123,5 +125,5 @@ def test_problem_recovery_cannot_invent_or_expand_evidence(quote):
     from nyayasaathi.extraction import parse_extraction
     payload = {'topic': 'consumer', 'confidence': .95, 'risk_flags': [], 'facts': [
         {'name': 'problem', 'value': 'summary', 'quote': quote}]}
-    with pytest.raises(ValueError):
-        parse_extraction(json.dumps(payload), CASES[0][0], 1)
+    result = parse_extraction(json.dumps(payload), CASES[0][0], 1)
+    assert not result.facts and result.issues

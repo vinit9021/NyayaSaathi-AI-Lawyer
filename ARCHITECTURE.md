@@ -96,6 +96,26 @@ Fallback may offer static scope information or show existing facts, clearly
 labelled. Missing Groq credentials disable voice but not text; missing Gemini
 credentials leave the UI usable with an explicit setup message.
 
+Intake validation has two boundaries. The topic/confidence/risk envelope must
+validate in full; malformed JSON, duplicate JSON keys, extra root fields, invalid
+safety metadata and truncated/filtered SDK completions fail closed. `facts` may
+be omitted. A present facts container must be a bounded list. Individual bad
+rows are quarantined with allowlisted field/code diagnostics; supported rows
+remain unconfirmed proposals. No raw diagnostic logging is added.
+
+Quote matching permits whitespace differences but stores the original user
+span. Narrative paraphrases are discarded in favor of short exact user quotes.
+Amounts may differ only by validated INR grouping/prefix/decimal formatting;
+acceptance requires one numerically equal user token, stored in its original
+form. No inferred dates, locations, zero repayment, translated quotes or fuzzy
+matches. Nulls remain absent until explicit user review. Identical rows dedupe;
+conflicting single-valued fields are withheld. Separately supported evidence or
+communication rows may combine into a bounded original user passage. Rejected
+updates to existing facts preserve the prior value but require review and block
+stale drafting. Clarifications prioritize rejected fields. One local complete
+JSON-fence/BOM cleanup is allowed; partial JSON is never reconstructed and no
+extra model repair request is made.
+
 Initial limits: 4,000 characters per turn, 20 recent turns plus validated case
 facts, bounded output tokens, 60-second/5 MB audio, and one in-flight submission
 per session. Reject or explain limits rather than silently dropping important

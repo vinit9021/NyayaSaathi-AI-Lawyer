@@ -83,6 +83,63 @@ Memory is session-only: at most 20 submissions and 40 retained messages, plus fa
 
 ## Offline verification
 
+### Structured intake reliability (current behavior)
+
+The parser now validates safety metadata separately from optional fact rows.
+One invalid row no longer discards valid sibling facts. The application keeps
+only facts supported by the current user message, never auto-confirms them,
+and asks concise clarifications for rejected fields. A rejected update to an
+existing fact preserves its old value and requires review before drafting.
+
+| Variation | Behavior |
+| --- | --- |
+| Missing fact list or optional fact, model null | Remains absent; no guessed value or automatic “unknown” answer |
+| Bad row shape/type, extra row properties, invented value/quote | Drop that row; keep independent valid facts; show static check codes |
+| Whitespace differences | Find and retain the original user span; no fuzzy matching |
+| INR 4500 versus ₹4,500 | Accept only an equal, unambiguous amount token; retain user formatting for review |
+| Translated/inferred locations or reformatted dates | Require literal support; otherwise clarify rather than infer |
+| Narrative paraphrase | Retain only its exact short user quote, never the model's paraphrase |
+| Duplicate fields | Dedupe identical rows; quarantine conflicting single-value rows; combine supported evidence/communications only as an exact user passage |
+| Invalid safety envelope, extra root claims/citations, truncated/filtered output | Reject the response without changing facts; never bypass safety |
+| Complete JSON fence/BOM | One local cleanup; no additional API request |
+
+Dates and amounts still require explicit review before draft use. Original
+comma-formatted amounts must be entered without commas in the confirmation form.
+Schema compliance is not proof of semantic truth; Google's
+[structured-output documentation](https://ai.google.dev/gemini-api/docs/structured-output)
+also requires application-side validation. No schema can prove arbitrary legal
+claims; the separate catalogue-only legal rendering remains unchanged.
+
+The interface shows an application build and intake-contract version, plus a
+notice when a retained session sees changed application files. Restart Streamlit
+and use New case for a fresh reviewer test; no evidence establishes that a stale
+session caused the observed provider-output failures. The app was restarted on
+`http://127.0.0.1:8501` during verification. Existing case data is session-only.
+
+Four newly authorized real requests tested two two-turn Streamlit conversations
+with `gemini-3.5-flash-lite` (2,048 output-token cap, 90-second timeout, zero retries):
+
+| Conversation | Turn 1 latency | Turn 2 latency | Observed result |
+| --- | --- | --- | --- |
+| English consumer | 2.936 s | 2.245 s | Both turns responded; confirmed INR 4500 preserved and INR 4600 correction flagged; repeated evidence rows were withheld |
+| Hinglish/Hindi rental | 1.790 s | 2.267 s | Both turns responded with clarifications; deposit/state/evidence model fields failed provenance and were withheld; user-reviewed deposit survived turn 2 |
+
+All four outputs used only catalogue guidance, retained case state on reruns,
+and made no duplicate request. This verifies real two-turn operation, **not
+complete extraction or broad live reliability**. The later multi-item evidence
+combination and additional boundary hardening were tested offline only; no
+extra live requests were made. The final offline regression suite passed
+403 tests; compilation and dependency checks passed.
+Shape/code/timing diagnostics (no raw content)
+are in ignored `tmp/intake-stability-20261110T062131Z/diagnostics.json`.
+Previously captured synthetic records below remain unchanged.
+
+Remaining failures are explicit: ambiguous money/dates, translated or unsupported
+quotes, rejected optional rows, unknown state names, invalid safety metadata,
+truncation, and provider errors may require user correction or resubmission.
+Provenance establishes textual support, not correctness of the model's field
+assignment, legal accuracy, or independent proof of a user's allegation.
+
 Live intake diagnostic (10 November 2026): the real Streamlit Gemini path
 intermittently rejected valid JSON when the model paraphrased a `problem` value
 despite providing an exact user quote. The parser previously rejected the whole

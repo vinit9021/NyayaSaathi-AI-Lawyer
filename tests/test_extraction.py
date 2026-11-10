@@ -30,8 +30,12 @@ def test_exact_quote_proposals_not_confirmed():
     {"facts": [{"name": "amount_paid", "value": "5000", "quote": "5000", "confirmed": True}]},
 ])
 def test_untrusted_shape_and_hallucinations_rejected(updates):
-    with pytest.raises(ValueError, match="confirmed facts were preserved"):
-        parse_extraction(payload(**updates), "5000", 1)
+    if isinstance(updates.get('facts'), list):
+        result = parse_extraction(payload(**updates), "5000", 1)
+        assert not result.facts and result.issues
+    else:
+        with pytest.raises(ValueError, match="confirmed facts were preserved"):
+            parse_extraction(payload(**updates), "5000", 1)
 
 
 @pytest.mark.parametrize("raw", ["not JSON", '[]', '{"topic":"consumer","topic":"unsupported"}', "x" * 24001])
