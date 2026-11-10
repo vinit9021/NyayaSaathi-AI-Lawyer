@@ -32,8 +32,6 @@ def run_ui(monkeypatch, response, text):
         app_mode='development',
         gemini_api_key='synthetic-only', gemini_model='configured-test-model', llm_max_retries=0))
     app = AppTest.from_file(APP, default_timeout=10).run()
-    app.selectbox(key='mode').select('Gemini').run()
-    app.checkbox(key='live_consent').check().run()
     app.chat_input[0].set_value(text).run()
     return app, sdk
 

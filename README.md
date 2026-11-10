@@ -22,11 +22,11 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-For the existing installed environment, run only the final command. Open the local URL printed by Streamlit; stop with Ctrl+C. Select a language and explicit mode. Opening the app sends no API request.
+For the existing installed environment, run only the final command. Open the local URL printed by Streamlit; stop with Ctrl+C. Select a language, then type or record a fictional supported issue. The app uses the configured live Gemini provider automatically; opening the app sends no API request.
 
-### Offline simulation
+### Offline test fixtures
 
-Select **Offline simulation**. No keys or network are needed. Its prominent label distinguishes deterministic demonstration from live AI. It recognizes limited topic words and optional field labels, not complete canned cases. Try fictional input:
+Offline simulation is available only through test fixtures and mocks; it is not a user-facing application mode and is never used as a live-provider fallback. Tests need no keys or network. The deterministic fixture recognizes limited topic words and optional field labels:
 
 ```text
 online refund; seller: FictionalShop; amount_paid: 5000; state: Maharashtra
@@ -45,19 +45,19 @@ Simulation language understanding is limited. Natural-language Hindi/Hinglish fi
 5. Review important missing fields and all `[Please provide: ...]` placeholders. Partial drafts can be downloaded, but must be completed and checked before use. Unconfirmed information is never silently promoted into the letter.
 6. Edit the draft, open **Preview**, acknowledge review, and click **Download text**. Downloads are UTF-8 `.txt`; no PDF dependency, automatic sending, filing, or emailing. A non-removable export notice identifies unverified statements and user responsibility.
 
-Edits stay in the current session and do not alter confirmed facts. Editing requires fresh review; changing the case disables the old download until you explicitly regenerate. Regeneration replaces draft edits. New case and provider-mode changes clear both facts and drafts. Separate sessions do not share them. Draft templates are in English with bilingual field labels; your statements retain their original language. Full Hindi document composition is not claimed.
+Edits stay in the current session and do not alter confirmed facts. Editing requires fresh review; changing the case disables the old download until you explicitly regenerate. Regeneration replaces draft edits. New cases clear both facts and drafts. Separate sessions do not share them. Draft templates are in English with bilingual field labels; your statements retain their original language. Full Hindi document composition is not claimed.
 
 Drafting requires a successful scope/safety assessment. Unsupported/urgent matters, unresolved conflicts, injection attempts and detected legal claims are blocked. The conservative text screen may also reject ordinary wording such as a fixed number of days or risk-related words; it cannot certify every possible user edit. No statute, deadline, judgment, guarantee, legal threat or state-specific entitlement is generated. Missing legal sources still permit neutral factual requests, not verified legal advice. Confirmation means the user affirmed a statement, not that evidence or legal rights were independently verified.
 
-### Real Gemini mode
+### Live Gemini provider
 
 Securely configure `GEMINI_API_KEY` and `GEMINI_MODEL` through environment variables, an ignored repository-root `.env`, or root-level Streamlit secrets. `.env.example` contains placeholders only. Never paste keys into chat, screenshots, or Git. Select an account-available model supporting structured JSON output; no model ID is baked in or silently substituted.
 
-Select **Gemini** and explicitly permit live requests using fictional data. A submitted message then sends the text and session context to Google. Missing configuration disables chat and shows guidance. Account model availability, quota, billing, and provider privacy terms require verification. `gemini-3.5-flash-lite` succeeded in a minimal test and a synthetic workflow on 9–10 November 2026 (India time); it is the locally configured model. Other accounts must verify their own access. The adapter uses the [official Google Gen AI SDK](https://googleapis.github.io/python-genai/).
+The application automatically uses Gemini for submitted fictional text and case context. Missing configuration disables chat and shows guidance; it never switches to simulation. Account model availability, quota, billing, and provider privacy terms require verification. `gemini-3.5-flash-lite` succeeded in a minimal test and a synthetic workflow on 9–10 November 2026 (India time); it is the locally configured model. Other accounts must verify their own access. The adapter uses the [official Google Gen AI SDK](https://googleapis.github.io/python-genai/).
 
 | Setting | Default/purpose |
 | --- | --- |
-| `LLM_PROVIDER` | `gemini`; required for real UI mode |
+| `LLM_PROVIDER` | `gemini`; required for the application |
 | `GEMINI_MODEL` | Unset; configure an available structured-output model |
 | `GEMINI_API_KEY` | Unset; real Gemini only |
 | `GROQ_API_KEY` | Unset; unused until voice implementation |

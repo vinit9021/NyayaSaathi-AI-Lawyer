@@ -6,11 +6,12 @@ from uuid import uuid4
 import streamlit as st
 import re
 
-from nyayasaathi.config import ConfigurationError, Settings, load_streamlit_settings
+from nyayasaathi import config as app_config
+from nyayasaathi.config import ConfigurationError
 from nyayasaathi.conversation import FIELDS, OPTIONAL_FIELDS, evidence_checklist, localize, unanswered_fields
 from nyayasaathi.conversation import process_turn
-from nyayasaathi.extraction import INTAKE_VERSION, confirm_facts
-from nyayasaathi.llm.factory import create_llm_client
+from nyayasaathi.extraction import confirm_facts
+from nyayasaathi.llm import factory as llm_factory
 from nyayasaathi.models import CaseState
 from nyayasaathi.retrieval import CatalogueError, load_catalogue, retrieve
 from nyayasaathi.safety import ground_claims
@@ -18,13 +19,11 @@ from nyayasaathi.drafting import LABELS, NOTICE, create_draft, download_bytes, f
 from nyayasaathi.speech import GroqSpeech, VoiceState, MESSAGES, SpeechError, transcribe_once, consume_transcript
 
 ROOT = Path(__file__).resolve().parent
-BUILD = sha256(b''.join(path.read_bytes() for path in
-                       [ROOT / 'app.py', *sorted((ROOT / 'nyayasaathi').rglob('*.py'))])).hexdigest()[:10]
 
 
 def reset_case(language):
     for key in list(st.session_state):
-        if key.startswith(('fact_', 'draft_', 'voice_')) or key in {'case', 'live_consent', 'voice'}:
+        if key.startswith(('fact_', 'draft_', 'voice_')) or key in {'case', 'voice'}:
             del st.session_state[key]
     st.session_state.case = CaseState(language=language)
 
@@ -158,24 +157,14 @@ def main():
     settings = None
     config_error = None
     try:
-        settings = load_streamlit_settings(dotenv_path=ROOT / '.env')
+        settings = app_config.load_streamlit_settings(dotenv_path=ROOT / '.env')
     except ConfigurationError:
         config_error = 'The service is not configured correctly. Please try again later.'
-    development = settings is not None and settings.app_mode == 'development'
-    if development:
-        st.caption('Application build: ' + BUILD + ' • Intake contract: ' + INTAKE_VERSION)
-        if st.session_state.get('app_build', BUILD) != BUILD:
-            st.warning('Application updated. Your session facts remain; review them or start a New case before retesting.')
-        st.session_state.app_build = BUILD
     preference = st.selectbox('Response language / जवाब की भाषा', ['English', 'हिन्दी'], key='language')
     language = 'hi' if preference == 'हिन्दी' else 'en'
     st.caption(localize('AI legal-information assistant, not a licensed lawyer. Information may be incomplete or outdated. Review drafts and consult a qualified lawyer for advice or urgent matters.',
                         'AI कानूनी-जानकारी सहायक, लाइसेंस प्राप्त वकील नहीं। जानकारी अधूरी या पुरानी हो सकती है। मसौदा जाँचें और सलाह या तात्कालिक मामलों में योग्य वकील से मिलें।', language))
     st.caption('Online shopping complaints and rental deposits only. Fictional examples only; no private case data. / केवल काल्पनिक खरीदारी और जमा राशि के मामले।')
-    mode = st.selectbox('Mode / तरीका', ['Choose mode', 'Offline simulation', 'Gemini'], key='mode') if development else 'Gemini'
-    if st.session_state.get('active_mode') != mode:
-        reset_case(language)
-        st.session_state.active_mode = mode
     if 'case' not in st.session_state:
         st.session_state.case = CaseState(language=language)
     if st.button('New case / नया मामला', type='primary'):
@@ -183,27 +172,17 @@ def main():
         st.rerun()
     state = replace(st.session_state.case, language=language)
     st.session_state.case = state
-    if mode == 'Choose mode':
-        st.info('Choose a development mode to begin.')
-        return
     client = None
-    if mode == 'Offline simulation':
-        st.warning('OFFLINE SIMULATION / ऑफलाइन अनुकरण — deterministic rules, not live AI. No API requests. Limited language understanding.')
-        client = create_llm_client(Settings(llm_provider='simulation'))
-    else:
-        st.caption('By submitting, you allow Google to process fictional text and case context. Audio goes to Groq only with permission. No app-side permanent case storage; provider policies still apply.')
-        consent = st.checkbox('I permit live Gemini requests using fictional data / काल्पनिक डेटा से Gemini अनुरोध की अनुमति', key='live_consent') if development else True
-        try:
-            if settings is None:
-                raise ConfigurationError(config_error or 'Service unavailable.')
-            settings.require_gemini()
-            if settings.llm_provider != 'gemini':
-                raise ConfigurationError('Gemini mode requires LLM_PROVIDER=gemini.')
-            if consent:
-                client = create_llm_client(settings, allow_live=True)
-        except ConfigurationError as error:
-            st.warning((str(error) + ' Offline simulation can be selected explicitly; no fallback occurs.') if development else
-                       'The AI service is unavailable. Please try again later. Your existing case remains visible.')
+    st.caption('By submitting, you allow Google to process fictional text and case context. Audio goes to Groq only with permission. No app-side permanent case storage; provider policies still apply.')
+    try:
+        if settings is None:
+            raise ConfigurationError(config_error or 'Service unavailable.')
+        settings.require_gemini()
+        if settings.llm_provider != 'gemini':
+            raise ConfigurationError('The live Gemini provider must be configured.')
+        client = llm_factory.create_llm_client(settings, allow_live=True)
+    except ConfigurationError as error:
+        st.warning('The AI service is unavailable. Please check the private Gemini configuration or try again later. Your existing case remains visible.')
     try:
         catalogue = load_catalogue()
     except CatalogueError:
@@ -213,12 +192,12 @@ def main():
     for message in state.history:
         with st.chat_message(message.role):
             visible = message.content
-            if not development and message.role == 'assistant':
+            if message.role == 'assistant':
                 visible = re.sub(r' \[(?:intake_shape|fact_shape|fact_provenance|intake_internal)\]', '', visible)
             st.text(visible)
     if state.blocked:
         st.error('This case needs qualified legal help. Start a new case only for a separate supported issue.')
-    if development and state.last_result and getattr(state.last_result, 'issues', ()):
+    if state.last_result and getattr(state.last_result, 'issues', ()):
         with st.expander('Intake checks / जानकारी की जाँच'):
             st.caption('Unverified fields were omitted. No raw conversation or model output is logged.')
             st.table([{'Field': issue.field or 'Unknown field', 'Check': issue.code}

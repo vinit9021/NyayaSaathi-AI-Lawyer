@@ -6,15 +6,27 @@ from streamlit.testing.v1 import AppTest
 
 from nyayasaathi.config import Settings
 from nyayasaathi.drafting import LABELS, download_bytes
+from nyayasaathi.llm.simulated import SimulatedLLM
 
 pytestmark = pytest.mark.offline
 APP = str(Path(__file__).resolve().parents[1] / "app.py")
 
 
+@pytest.fixture(autouse=True)
+def simulated_provider(monkeypatch):
+    monkeypatch.setattr(
+        "nyayasaathi.config.load_streamlit_settings",
+        lambda **_: Settings(gemini_api_key="synthetic", gemini_model="test"),
+    )
+    monkeypatch.setattr(
+        "nyayasaathi.llm.factory.create_llm_client",
+        lambda settings, **_: SimulatedLLM(),
+    )
+
+
 def start_simulation(language="English"):
     app = AppTest.from_file(APP).run()
     app.selectbox(key="language").select(language).run()
-    app.selectbox(key="mode").select("Offline simulation").run()
     assert not app.exception
     return app
 
@@ -25,7 +37,7 @@ def button(app, label):
 
 def test_simulated_chat_rerun_does_not_duplicate_turn():
     app = start_simulation()
-    assert any("SIMULATION" in item.value for item in app.warning)
+    assert not any("simulation" in item.value.lower() for item in app.warning)
     app.chat_input[0].set_value("online refund; seller: FictionalShop; amount_paid: INR 5000; state: Maharashtra").run()
     assert not app.exception
     assert app.session_state.case.topic == "consumer"
@@ -60,23 +72,22 @@ def test_hindi_rental_flow_and_evidence():
 
 
 def test_missing_credentials_friendly_no_fake_fallback(monkeypatch):
-    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(app_mode='development'))
+    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings())
     app = AppTest.from_file(APP).run()
-    app.selectbox(key="mode").select("Gemini").run()
     assert not app.exception and app.chat_input[0].disabled
-    assert any("GEMINI_API_KEY" in item.value for item in app.warning)
-    assert not any("OFFLINE SIMULATION" in item.value for item in app.warning)
+    assert any("unavailable" in item.value.lower() for item in app.warning)
+    assert not any("simulation" in item.value.lower() for item in app.warning)
+    assert not any(item.key == "mode" for item in app.selectbox)
 
 
-def test_configured_gemini_still_requires_consent(monkeypatch):
-    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(app_mode='development', gemini_api_key="synthetic", gemini_model="test"))
-    forbidden = Mock(side_effect=AssertionError("must not construct SDK"))
-    monkeypatch.setattr("nyayasaathi.llm.gemini.genai.Client", forbidden)
+def test_configured_gemini_is_ready_without_consent(monkeypatch):
+    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings",
+                        lambda **_: Settings(gemini_api_key="synthetic", gemini_model="test"))
     app = AppTest.from_file(APP).run()
-    app.selectbox(key="mode").select("Gemini").run()
-    assert app.chat_input[0].disabled
+    assert not app.chat_input[0].disabled
+    assert not any(item.key == "mode" for item in app.selectbox)
+    assert not any(item.key == "live_consent" for item in app.checkbox)
     assert not app.warning
-    forbidden.assert_not_called()
 
 
 def test_high_risk_disables_chat():
@@ -95,12 +106,11 @@ def test_two_ui_sessions_do_not_share_data():
     assert not second.session_state.case.history
 
 
-def test_switching_modes_clears_case_context(monkeypatch):
-    monkeypatch.setattr("nyayasaathi.config.load_streamlit_settings", lambda **_: Settings(app_mode='development'))
+def test_mode_selector_is_not_rendered_and_chat_starts_directly():
     app = start_simulation()
     app.chat_input[0].set_value("online refund").run()
-    app.selectbox(key="mode").select("Gemini").run()
-    assert not app.session_state.case.history
+    assert not app.exception
+    assert not any(item.key == "mode" for item in app.selectbox)
 
 
 @pytest.mark.parametrize('text,topic', [
@@ -172,16 +182,14 @@ def test_draft_edit_injection_cannot_export_or_modify_facts():
     assert app.session_state.case.facts == facts
 
 
-def test_draft_sessions_and_mode_reset_are_isolated(monkeypatch):
-    monkeypatch.setattr('nyayasaathi.config.load_streamlit_settings', lambda **_: Settings(app_mode='development'))
+def test_draft_sessions_are_isolated():
     first = start_simulation()
     first.chat_input[0].set_value('online refund').run()
     button(first, 'Confirm entered details / दर्ज जानकारी की पुष्टि').click().run()
     button(first, 'Generate / regenerate draft / मसौदा बनाएँ').click().run()
     second = start_simulation()
     assert 'draft_document' not in second.session_state
-    first.selectbox(key='mode').select('Gemini').run()
-    assert 'draft_document' not in first.session_state and 'draft_text' not in first.session_state
+    assert 'draft_document' in first.session_state
 
 
 def test_current_risk_hides_previously_generated_download():

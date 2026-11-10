@@ -214,11 +214,12 @@ def test_bounded_formatting_repair_never_calls_model_twice(wrapper):
     assert sdk.models.generate_content.call_count == 1
 
 
-def test_stale_build_notice_preserves_case(monkeypatch):
+def test_production_rerun_preserves_case_without_developer_notice(monkeypatch):
     text, topic, name, value = CASES[0]
     app, sdk = run_ui(monkeypatch, sdk_response(envelope([row(name, value)])), text)
     before = app.session_state.case
     app.session_state.app_build = 'previous-build'
     app.run()
-    assert any('Application updated' in w.value for w in app.warning)
+    assert not any('Application updated' in w.value for w in app.warning)
+    assert not any(item.key == 'mode' for item in app.selectbox)
     assert app.session_state.case == before and sdk.models.generate_content.call_count == 1
