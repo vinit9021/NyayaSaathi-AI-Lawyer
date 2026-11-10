@@ -1,0 +1,29 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "mode": "live-gemini",
+  "attempt": 4,
+  "raw_text": "{\"topic\": \"rental_deposit\", \"confidence\": 0.9, \"risk_flags\": [], \"facts\": [{\"name\": \"evidence\", \"value\": \"\\u0929\\u0924\\u0947\", \"quote\": \"\\u0928\\u0947\\u0924\\u0947\"}, {\"name\": \"desired_outcome\", \"value\": \"\\u0915\\u0930\\u0928\\u0936\", \"quote\": \"\\u0915\\u0930\\u0928\\u0936\"}]}",
+  "finish_reasons": [
+    "FinishReason.STOP"
+  ],
+  "usage": {
+    "cache_tokens_details": null,
+    "cached_content_token_count": null,
+    "candidates_token_count": 146,
+    "candidates_tokens_details": null,
+    "prompt_token_count": 640,
+    "prompt_tokens_details": [
+      {
+        "modality": "TEXT",
+        "token_count": 640
+      }
+    ],
+    "thoughts_token_count": null,
+    "tool_use_prompt_token_count": null,
+    "tool_use_prompt_tokens_details": null,
+    "total_token_count": 786,
+    "traffic_type": null
+  },
+  "api_success": true,
+  "seconds": 1.95
+}

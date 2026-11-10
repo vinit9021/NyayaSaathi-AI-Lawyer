@@ -1,0 +1,9 @@
+{
+  "mode": "offline",
+  "synthetic_only": true,
+  "timestamp_utc": "2026-11-10T11:18:19.495869+00:00",
+  "commit": "240ec95aebe4a3828bcc8cf3a434f7e31d8783c6",
+  "dirty": true,
+  "catalogue_sha256": "6689ac2bb859ad18f39e31614168fc59b166b9115b5a073c7d4561536cfb46c6",
+  "raw_outputs_are_unedited": true
+}

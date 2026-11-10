@@ -1,0 +1,116 @@
+{
+  "case_id": "hinglish_rental",
+  "mode": "offline-simulation",
+  "input": "Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile.",
+  "turn": 1,
+  "timestamp_utc": "2026-11-10T11:18:19.754701+00:00",
+  "seconds": 0.0049,
+  "raw_provider": [
+    {
+      "model": "offline-simulation",
+      "text": "{\"topic\": \"rental_deposit\", \"confidence\": 0.9, \"risk_flags\": [], \"facts\": [{\"name\": \"problem\", \"value\": \"Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile.\", \"quote\": \"Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile.\"}]}",
+      "mode": "offline-simulation"
+    }
+  ],
+  "state": {
+    "case_id": "831ec3e2990944ef90024105bf9d3f43",
+    "language": "en",
+    "topic": "rental_deposit",
+    "facts": [],
+    "proposals": [
+      {
+        "name": "problem",
+        "value": "Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile.",
+        "quote": "Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile.",
+        "turn": 1,
+        "confirmed": false
+      }
+    ],
+    "conflicts": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile."
+      },
+      {
+        "role": "assistant",
+        "content": "Details recorded for your review. Legal information and sources are below. I could not verify the legal position; source limitations are shown below.\n\nPlease review and confirm the proposed details below, especially any conflicts.\n\nWhich Indian state/UT is involved?"
+      }
+    ],
+    "processed_ids": [
+      "1"
+    ],
+    "blocked": null,
+    "last_result": {
+      "message": "Details recorded for your review. Legal information and sources are below. I could not verify the legal position; source limitations are shown below.",
+      "decision": {
+        "topic": "rental_deposit",
+        "disposition": "supported",
+        "reasons": [],
+        "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+      },
+      "questions": [
+        "Please review and confirm the proposed details below, especially any conflicts.",
+        "Which Indian state/UT is involved?"
+      ],
+      "missing_fields": [
+        "problem",
+        "state",
+        "city",
+        "deposit_paid",
+        "deposit_returned",
+        "move_out_date",
+        "deductions",
+        "agreement",
+        "evidence",
+        "contact_attempts",
+        "desired_outcome"
+      ],
+      "evidence_checklist": [
+        "Rental agreement and deposit receipt",
+        "Handover/condition records and deduction breakdown",
+        "Landlord communications"
+      ],
+      "claims": [
+        {
+          "claim_id": "rental_state_caution",
+          "source_id": "pib_model_tenancy",
+          "kind": "information",
+          "text": "The Model Tenancy Act was circulated for state/UT adaptation. It is not evidence that one deposit rule applies everywhere; the applicable state law must be checked.",
+          "title": "PIB: Model Tenancy Act circulated for state/UT adoption",
+          "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1723636&reg=48&lang=2",
+          "jurisdiction": "IN",
+          "locator": "Release 1723636, 2 June 2021, opening paragraph",
+          "checked_on": "2026-11-09",
+          "limitations": "State enactment, applicability, deposit caps, refund periods, and lawful deductions require separate verification."
+        },
+        {
+          "claim_id": "legal_help_route",
+          "source_id": "nalsa_help",
+          "kind": "referral",
+          "text": "Ask the appropriate District or State Legal Services Authority about legal help and eligibility, or consult a qualified lawyer. Free legal aid is not guaranteed for every applicant.",
+          "title": "NALSA: Legal Aid",
+          "url": "https://nalsa.gov.in/legal-aid/",
+          "jurisdiction": "IN",
+          "locator": "Claiming Free Legal Aid / Application Procedure, question 1; eligibility FAQs",
+          "checked_on": "2026-11-09",
+          "limitations": "No promise of free representation, acceptance, response time, or case outcome."
+        }
+      ],
+      "gaps": [
+        "state_required_for_rental_law",
+        "rental_statutory_position_unverified"
+      ],
+      "error": null,
+      "issues": []
+    },
+    "assessment": {
+      "topic": "rental_deposit",
+      "disposition": "supported",
+      "reasons": [],
+      "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+    }
+  },
+  "confirmed_preserved": true,
+  "note": "Deterministic simulation or injected failure. NOT live AI."
+}

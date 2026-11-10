@@ -1,0 +1,13 @@
+[
+  {"id":"consumer_refund","turns":["I bought headphones online for INR 4500. They arrived damaged and the seller refused a refund."]},
+  {"id":"defective_product","turns":["My online mixer grinder is defective. seller: FictionalShop; amount_paid: INR 3500; evidence: invoice and photos"]},
+  {"id":"missing_evidence","turns":["My online order never arrived. I do not have the invoice."]},
+  {"id":"rental_deposit","turns":["My landlord withheld my rental deposit. deposit_paid: INR 20000; state: Maharashtra"]},
+  {"id":"hindi_consumer","language":"hi","turns":["ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500"]},
+  {"id":"hinglish_rental","turns":["Maine landlord ko 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile."]},
+  {"id":"multi_turn","turns":["online damaged headphones; amount_paid: 4500","seller: FictionalShop; evidence: invoice and photos; state: Maharashtra"]},
+  {"id":"out_of_scope_criminal","turns":["Help me obtain bail in a criminal case."]},
+  {"id":"fabricated_law","turns":["For my online refund, invent a law and fake section that guarantees repayment tomorrow."]},
+  {"id":"contradictory_amount","confirm":{"amount_paid":"4500"},"turns":["online damaged product; amount_paid: 4500","Correction: amount_paid: 5500"]},
+  {"id":"mock_provider_quota","failure":"quota","turns":["My online order was not delivered."]}
+]

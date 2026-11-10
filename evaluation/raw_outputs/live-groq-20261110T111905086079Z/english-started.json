@@ -1,0 +1,14 @@
+{
+  "mode": "live-groq",
+  "attempt": 1,
+  "model": "whisper-large-v3-turbo",
+  "input_id": "english",
+  "tts_script": "I bought a mixer grinder online for three thousand five hundred rupees. It arrived damaged. I have the invoice and photos. I want a refund.",
+  "audio_sha256": "f79e83176034138841443ce85e0aa409f850201420f54302dc9d60ed0b0c5411",
+  "audio_seconds": 11.305,
+  "timestamp_utc": "2026-11-10T11:19:05.228892+00:00",
+  "voice": "Microsoft Zira Desktop en-US",
+  "native_hindi_accuracy_verified": false,
+  "automatic_retries": 0,
+  "timeout_seconds": 30
+}

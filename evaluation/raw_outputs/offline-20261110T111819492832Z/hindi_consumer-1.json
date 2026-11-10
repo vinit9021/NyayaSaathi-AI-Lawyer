@@ -1,0 +1,132 @@
+{
+  "case_id": "hindi_consumer",
+  "mode": "offline-simulation",
+  "input": "ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500",
+  "turn": 1,
+  "timestamp_utc": "2026-11-10T11:18:19.747890+00:00",
+  "seconds": 0.0041,
+  "raw_provider": [
+    {
+      "model": "offline-simulation",
+      "text": "{\"topic\": \"consumer\", \"confidence\": 0.9, \"risk_flags\": [], \"facts\": [{\"name\": \"amount_paid\", \"value\": \"4500\", \"quote\": \"amount_paid: 4500\"}, {\"name\": \"problem\", \"value\": \"ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500\", \"quote\": \"ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500\"}]}",
+      "mode": "offline-simulation"
+    }
+  ],
+  "state": {
+    "case_id": "86b83b4e40b34364ab7495af070b5ea4",
+    "language": "hi",
+    "topic": "consumer",
+    "facts": [],
+    "proposals": [
+      {
+        "name": "amount_paid",
+        "value": "4500",
+        "quote": "amount_paid: 4500",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "problem",
+        "value": "ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500",
+        "quote": "ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500",
+        "turn": 1,
+        "confirmed": false
+      }
+    ],
+    "conflicts": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "ऑनलाइन सामान खराब आया। मुझे पैसे वापस चाहिए। amount_paid: 4500"
+      },
+      {
+        "role": "assistant",
+        "content": "जानकारी जाँच के लिए दर्ज है। कानूनी जानकारी और स्रोत नीचे हैं।\n\nनीचे प्रस्तावित जानकारी जाँचें और पुष्टि करें, खासकर विरोधी जानकारी।\n\nकौन-सा विक्रेता या ऑनलाइन प्लेटफॉर्म था?"
+      }
+    ],
+    "processed_ids": [
+      "1"
+    ],
+    "blocked": null,
+    "last_result": {
+      "message": "जानकारी जाँच के लिए दर्ज है। कानूनी जानकारी और स्रोत नीचे हैं।",
+      "decision": {
+        "topic": "consumer",
+        "disposition": "supported",
+        "reasons": [],
+        "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+      },
+      "questions": [
+        "नीचे प्रस्तावित जानकारी जाँचें और पुष्टि करें, खासकर विरोधी जानकारी।",
+        "कौन-सा विक्रेता या ऑनलाइन प्लेटफॉर्म था?"
+      ],
+      "missing_fields": [
+        "problem",
+        "seller",
+        "state",
+        "city",
+        "amount_paid",
+        "refund_amount",
+        "purchase_date",
+        "delivery_date",
+        "evidence",
+        "contact_attempts",
+        "desired_outcome"
+      ],
+      "evidence_checklist": [
+        "ऑर्डर/बिल और भुगतान का रिकॉर्ड",
+        "डिलीवरी/ट्रैकिंग या खराबी की तस्वीरें",
+        "विक्रेता/प्लेटफॉर्म से बातचीत"
+      ],
+      "claims": [
+        {
+          "claim_id": "nch_route",
+          "source_id": "nch_grievance",
+          "kind": "information",
+          "text": "आप राष्ट्रीय उपभोक्ता हेल्पलाइन पर शिकायत दर्ज करके जवाब देख सकते हैं। इससे रिफंड की गारंटी नहीं मिलती।",
+          "title": "National Consumer Helpline: grievance redressal",
+          "url": "https://consumerhelpline.gov.in/public/",
+          "jurisdiction": "IN",
+          "locator": "How NCH Works, steps 1–4",
+          "checked_on": "2026-11-09",
+          "limitations": "NCH routing does not guarantee a refund or replace legal proceedings."
+        },
+        {
+          "claim_id": "online_coverage",
+          "source_id": "nch_online",
+          "kind": "information",
+          "text": "NCH की जानकारी में ऑनलाइन खरीद भी उपभोक्ता लेनदेन में शामिल है। किसी खरीद पर नियम लागू होने के लिए व्यावसायिक उद्देश्य जैसी सीमाएँ देखनी होंगी।",
+          "title": "NCH knowledge base: Consumer Protection Act 2019",
+          "url": "https://consumerhelpline.gov.in/public/knowledgebasedetails/Consumer%20Protection%20Act%202019",
+          "jurisdiction": "IN",
+          "locator": "Questions 3–4: consumer definition and exclusions",
+          "checked_on": "2026-11-09",
+          "limitations": "Official guidance is not a consolidated statute. Commission thresholds, filing portals, deadlines, and business-purchase eligibility are excluded from this record."
+        },
+        {
+          "claim_id": "legal_help_route",
+          "source_id": "nalsa_help",
+          "kind": "referral",
+          "text": "उचित जिला या राज्य विधिक सेवा प्राधिकरण से कानूनी मदद और पात्रता पूछें, या योग्य वकील से सलाह लें। हर आवेदक को मुफ्त सहायता की गारंटी नहीं है।",
+          "title": "NALSA: Legal Aid",
+          "url": "https://nalsa.gov.in/legal-aid/",
+          "jurisdiction": "IN",
+          "locator": "Claiming Free Legal Aid / Application Procedure, question 1; eligibility FAQs",
+          "checked_on": "2026-11-09",
+          "limitations": "No promise of free representation, acceptance, response time, or case outcome."
+        }
+      ],
+      "gaps": [],
+      "error": null,
+      "issues": []
+    },
+    "assessment": {
+      "topic": "consumer",
+      "disposition": "supported",
+      "reasons": [],
+      "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+    }
+  },
+  "confirmed_preserved": true,
+  "note": "Deterministic simulation or injected failure. NOT live AI."
+}

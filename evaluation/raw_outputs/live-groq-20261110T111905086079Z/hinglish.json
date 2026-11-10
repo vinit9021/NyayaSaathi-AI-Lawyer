@@ -1,0 +1,23 @@
+{
+  "mode": "live-groq",
+  "attempt": 2,
+  "model": "whisper-large-v3-turbo",
+  "input_id": "hinglish",
+  "tts_script": "Maine landlord ko twenty thousand rupees security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile.",
+  "audio_sha256": "89ae2bab4aff74f65f05a83ef5a71451d1f8d84d57c1207c0b74c4b0357331b2",
+  "audio_seconds": 9.58,
+  "timestamp_utc": "2026-11-10T11:19:06.320202+00:00",
+  "voice": "Microsoft Zira Desktop en-US",
+  "native_hindi_accuracy_verified": false,
+  "automatic_retries": 0,
+  "timeout_seconds": 30,
+  "raw_response": {
+    "text": " Main Landlord Ko 20,000 Rupees Security Deposit D.A.T.H.A. Room Kali Kaur D.A. Likan Pais Wapas Nahi Mile",
+    "x_groq": {
+      "id": "req_01m72jxshaef8a6zgxx12h8pax"
+    }
+  },
+  "transcript": "Main Landlord Ko 20,000 Rupees Security Deposit D.A.T.H.A. Room Kali Kaur D.A. Likan Pais Wapas Nahi Mile",
+  "success": true,
+  "seconds": 0.384
+}

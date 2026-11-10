@@ -1,0 +1,29 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "mode": "live-gemini",
+  "attempt": 2,
+  "raw_text": "{\"topic\": \"consumer\", \"confidence\": 1, \"risk_flags\": [], \"facts\": [{\"name\": \"amount_paid\", \"value\": \"INR 3600\", \"quote\": \"I paid INR 3600.\"}, {\"name\": \"purchase_date\", \"value\": \"2026-10-20\", \"quote\": \"The purchase date was 2026-10-20\"}, {\"name\": \"delivery_date\", \"value\": \"2026-10-23\", \"quote\": \"delivery date was 2026-10-23.\"}]}",
+  "finish_reasons": [
+    "FinishReason.STOP"
+  ],
+  "usage": {
+    "cache_tokens_details": null,
+    "cached_content_token_count": null,
+    "candidates_token_count": 139,
+    "candidates_tokens_details": null,
+    "prompt_token_count": 847,
+    "prompt_tokens_details": [
+      {
+        "modality": "TEXT",
+        "token_count": 847
+      }
+    ],
+    "thoughts_token_count": null,
+    "tool_use_prompt_token_count": null,
+    "tool_use_prompt_tokens_details": null,
+    "total_token_count": 986,
+    "traffic_type": null
+  },
+  "api_success": true,
+  "seconds": 2.109
+}

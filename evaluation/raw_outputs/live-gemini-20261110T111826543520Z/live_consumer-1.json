@@ -1,0 +1,170 @@
+{
+  "mode": "live-gemini",
+  "case_id": "live_consumer",
+  "turn": 1,
+  "input": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+  "timestamp_utc": "2026-11-10T11:18:31.523016+00:00",
+  "ui_exception": false,
+  "state": {
+    "case_id": "2bd55e56894044e8a6ff9b2e00e0b3cb",
+    "language": "en",
+    "topic": "consumer",
+    "facts": [],
+    "proposals": [
+      {
+        "name": "product",
+        "value": "mixer grinder",
+        "quote": "mixer grinder",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "seller",
+        "value": "FictionalShop",
+        "quote": "FictionalShop",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "amount_paid",
+        "value": "INR 3500",
+        "quote": "INR 3500",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "problem",
+        "value": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+        "quote": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "evidence",
+        "value": "invoice and photos",
+        "quote": "I have an invoice and photos.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "contact_attempts",
+        "value": "The seller refused a refund.",
+        "quote": "The seller refused a refund.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "state",
+        "value": "Maharashtra",
+        "quote": "Maharashtra",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "desired_outcome",
+        "value": "want my money back",
+        "quote": "want my money back",
+        "turn": 1,
+        "confirmed": false
+      }
+    ],
+    "conflicts": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back."
+      },
+      {
+        "role": "assistant",
+        "content": "Details recorded for your review. Legal information and sources are below.\n\nPlease review and confirm the proposed details below, especially any conflicts.\n\nWhich city is involved?"
+      }
+    ],
+    "processed_ids": [
+      "3a82d441a08440e9adc09b19542342eb"
+    ],
+    "blocked": null,
+    "last_result": {
+      "message": "Details recorded for your review. Legal information and sources are below.",
+      "decision": {
+        "topic": "consumer",
+        "disposition": "supported",
+        "reasons": [],
+        "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+      },
+      "questions": [
+        "Please review and confirm the proposed details below, especially any conflicts.",
+        "Which city is involved?"
+      ],
+      "missing_fields": [
+        "problem",
+        "seller",
+        "state",
+        "city",
+        "amount_paid",
+        "refund_amount",
+        "purchase_date",
+        "delivery_date",
+        "evidence",
+        "contact_attempts",
+        "desired_outcome"
+      ],
+      "evidence_checklist": [
+        "Order/invoice and payment record",
+        "Delivery/tracking or defect photos",
+        "Seller/platform communications"
+      ],
+      "claims": [
+        {
+          "claim_id": "nch_route",
+          "source_id": "nch_grievance",
+          "kind": "information",
+          "text": "You can raise a consumer grievance through the National Consumer Helpline and track the response. This does not guarantee a refund.",
+          "title": "National Consumer Helpline: grievance redressal",
+          "url": "https://consumerhelpline.gov.in/public/",
+          "jurisdiction": "IN",
+          "locator": "How NCH Works, steps 1–4",
+          "checked_on": "2026-11-09",
+          "limitations": "NCH routing does not guarantee a refund or replace legal proceedings."
+        },
+        {
+          "claim_id": "online_coverage",
+          "source_id": "nch_online",
+          "kind": "information",
+          "text": "NCH guidance includes online purchases within consumer transactions. Whether a particular purchase qualifies needs attention to exclusions, including commercial purpose.",
+          "title": "NCH knowledge base: Consumer Protection Act 2019",
+          "url": "https://consumerhelpline.gov.in/public/knowledgebasedetails/Consumer%20Protection%20Act%202019",
+          "jurisdiction": "IN",
+          "locator": "Questions 3–4: consumer definition and exclusions",
+          "checked_on": "2026-11-09",
+          "limitations": "Official guidance is not a consolidated statute. Commission thresholds, filing portals, deadlines, and business-purchase eligibility are excluded from this record."
+        },
+        {
+          "claim_id": "legal_help_route",
+          "source_id": "nalsa_help",
+          "kind": "referral",
+          "text": "Ask the appropriate District or State Legal Services Authority about legal help and eligibility, or consult a qualified lawyer. Free legal aid is not guaranteed for every applicant.",
+          "title": "NALSA: Legal Aid",
+          "url": "https://nalsa.gov.in/legal-aid/",
+          "jurisdiction": "IN",
+          "locator": "Claiming Free Legal Aid / Application Procedure, question 1; eligibility FAQs",
+          "checked_on": "2026-11-09",
+          "limitations": "No promise of free representation, acceptance, response time, or case outcome."
+        }
+      ],
+      "gaps": [],
+      "error": null,
+      "issues": []
+    },
+    "assessment": {
+      "topic": "consumer",
+      "disposition": "supported",
+      "reasons": [],
+      "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+    }
+  },
+  "confirmed_preserved": true,
+  "calls_used": 1,
+  "catalogue_only": true,
+  "rerun_preserved": true,
+  "no_duplicate_call": true
+}

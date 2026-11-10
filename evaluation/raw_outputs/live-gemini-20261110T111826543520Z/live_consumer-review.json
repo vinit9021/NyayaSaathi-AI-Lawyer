@@ -1,0 +1,96 @@
+{
+  "action": "Explicit synthetic amount confirmation through UI",
+  "field": "amount_paid",
+  "value": "3500",
+  "state": {
+    "case_id": "2bd55e56894044e8a6ff9b2e00e0b3cb",
+    "language": "en",
+    "topic": "consumer",
+    "facts": [
+      {
+        "name": "amount_paid",
+        "value": "3500",
+        "quote": "3500",
+        "turn": 1,
+        "confirmed": true
+      }
+    ],
+    "proposals": [
+      {
+        "name": "product",
+        "value": "mixer grinder",
+        "quote": "mixer grinder",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "seller",
+        "value": "FictionalShop",
+        "quote": "FictionalShop",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "problem",
+        "value": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+        "quote": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "evidence",
+        "value": "invoice and photos",
+        "quote": "I have an invoice and photos.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "contact_attempts",
+        "value": "The seller refused a refund.",
+        "quote": "The seller refused a refund.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "state",
+        "value": "Maharashtra",
+        "quote": "Maharashtra",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "desired_outcome",
+        "value": "want my money back",
+        "quote": "want my money back",
+        "turn": 1,
+        "confirmed": false
+      }
+    ],
+    "conflicts": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back."
+      },
+      {
+        "role": "assistant",
+        "content": "Details recorded for your review. Legal information and sources are below.\n\nPlease review and confirm the proposed details below, especially any conflicts.\n\nWhich city is involved?"
+      },
+      {
+        "role": "user",
+        "content": "User-confirmed amount_paid: 3500"
+      }
+    ],
+    "processed_ids": [
+      "3a82d441a08440e9adc09b19542342eb"
+    ],
+    "blocked": null,
+    "last_result": null,
+    "assessment": {
+      "topic": "consumer",
+      "disposition": "supported",
+      "reasons": [],
+      "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "attempt": 4,
+  "model": "gemini-3.5-flash-lite",
+  "timeout_ms": 90000,
+  "max_output_tokens": 1024,
+  "automatic_retries": 0,
+  "timestamp_utc": "2026-11-10T11:18:36.891260+00:00"
+}

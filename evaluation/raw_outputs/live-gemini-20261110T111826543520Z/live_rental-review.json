@@ -1,0 +1,61 @@
+{
+  "action": "Explicit synthetic amount confirmation through UI",
+  "field": "deposit_paid",
+  "value": "20000",
+  "state": {
+    "case_id": "2158e5c52859436fa1efdd5fbc1dde8c",
+    "language": "en",
+    "topic": "rental_deposit",
+    "facts": [
+      {
+        "name": "deposit_paid",
+        "value": "20000",
+        "quote": "20000",
+        "turn": 1,
+        "confirmed": true
+      }
+    ],
+    "proposals": [
+      {
+        "name": "problem",
+        "value": "Maine landlord ko INR 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile. Main Maharashtra mein rehta hoon.",
+        "quote": "Maine landlord ko INR 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile. Main Maharashtra mein rehta hoon.",
+        "turn": 1,
+        "confirmed": false
+      },
+      {
+        "name": "state",
+        "value": "Maharashtra",
+        "quote": "Main Maharashtra mein rehta hoon.",
+        "turn": 1,
+        "confirmed": false
+      }
+    ],
+    "conflicts": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "Maine landlord ko INR 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile. Main Maharashtra mein rehta hoon."
+      },
+      {
+        "role": "assistant",
+        "content": "Details recorded for your review. Legal information and sources are below. I could not verify the legal position; source limitations are shown below.\n\nPlease review and confirm the proposed details below, especially any conflicts.\n\nWhich city is involved?"
+      },
+      {
+        "role": "user",
+        "content": "User-confirmed deposit_paid: 20000"
+      }
+    ],
+    "processed_ids": [
+      "69970a5577e645b395d6c92ec0c73f43"
+    ],
+    "blocked": null,
+    "last_result": null,
+    "assessment": {
+      "topic": "rental_deposit",
+      "disposition": "supported",
+      "reasons": [],
+      "message": "General legal information only; applicability requires review. AI legal-information assistant, not a licensed lawyer. Consult a qualified lawyer for legal advice or urgent matters."
+    }
+  }
+}

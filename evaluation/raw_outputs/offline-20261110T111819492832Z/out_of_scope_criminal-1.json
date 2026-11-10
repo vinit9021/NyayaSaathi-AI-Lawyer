@@ -1,0 +1,66 @@
+{
+  "case_id": "out_of_scope_criminal",
+  "mode": "offline-simulation",
+  "input": "Help me obtain bail in a criminal case.",
+  "turn": 1,
+  "timestamp_utc": "2026-11-10T11:18:19.770462+00:00",
+  "seconds": 0.003,
+  "raw_provider": [],
+  "state": {
+    "case_id": "9a6b142e4977415b833226b726f29de8",
+    "language": "en",
+    "topic": "unclear",
+    "facts": [],
+    "proposals": [],
+    "conflicts": [],
+    "history": [
+      {
+        "role": "user",
+        "content": "Help me obtain bail in a criminal case."
+      },
+      {
+        "role": "assistant",
+        "content": "This is outside the two supported dispute types. Please consult a qualified lawyer."
+      }
+    ],
+    "processed_ids": [
+      "1"
+    ],
+    "blocked": {
+      "topic": "unsupported",
+      "disposition": "escalate",
+      "reasons": [
+        "unsupported_category"
+      ],
+      "message": "This is outside the two supported dispute types. Please consult a qualified lawyer."
+    },
+    "last_result": {
+      "message": "This is outside the two supported dispute types. Please consult a qualified lawyer.",
+      "decision": {
+        "topic": "unsupported",
+        "disposition": "escalate",
+        "reasons": [
+          "unsupported_category"
+        ],
+        "message": "This is outside the two supported dispute types. Please consult a qualified lawyer."
+      },
+      "questions": [],
+      "missing_fields": [],
+      "evidence_checklist": [],
+      "claims": [],
+      "gaps": [],
+      "error": null,
+      "issues": []
+    },
+    "assessment": {
+      "topic": "unsupported",
+      "disposition": "escalate",
+      "reasons": [
+        "unsupported_category"
+      ],
+      "message": "This is outside the two supported dispute types. Please consult a qualified lawyer."
+    }
+  },
+  "confirmed_preserved": true,
+  "note": "Deterministic simulation or injected failure. NOT live AI."
+}

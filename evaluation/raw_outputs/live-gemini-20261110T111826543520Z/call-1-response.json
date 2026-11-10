@@ -1,0 +1,29 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "mode": "live-gemini",
+  "attempt": 1,
+  "raw_text": "{\n  \"topic\": \"consumer\",\n  \"confidence\": 0.95,\n  \"risk_flags\": [],\n  \"facts\": [\n    {\n      \"name\": \"product\",\n      \"value\": \"mixer grinder\",\n      \"quote\": \"mixer grinder\"\n    },\n    {\n      \"name\": \"seller\",\n      \"value\": \"FictionalShop\",\n      \"quote\": \"FictionalShop\"\n    },\n    {\n      \"name\": \"amount_paid\",\n      \"value\": \"INR 3500\",\n      \"quote\": \"INR 3500\"\n    },\n    {\n      \"name\": \"problem\",\n      \"value\": \"It arrived damaged.\",\n      \"quote\": \"It arrived damaged.\"\n    },\n    {\n      \"name\": \"evidence\",\n      \"value\": \"invoice and photos\",\n      \"quote\": \"I have an invoice and photos.\"\n    },\n    {\n      \"name\": \"contact_attempts\",\n      \"value\": \"The seller refused a refund.\",\n      \"quote\": \"The seller refused a refund.\"\n    },\n    {\n      \"name\": \"state\",\n      \"value\": \"Maharashtra\",\n      \"quote\": \"Maharashtra\"\n    },\n    {\n      \"name\": \"desired_outcome\",\n      \"value\": \"want my money back\",\n      \"quote\": \"want my money back\"\n    }\n  ]\n}",
+  "finish_reasons": [
+    "FinishReason.STOP"
+  ],
+  "usage": {
+    "cache_tokens_details": null,
+    "cached_content_token_count": null,
+    "candidates_token_count": 328,
+    "candidates_tokens_details": null,
+    "prompt_token_count": 368,
+    "prompt_tokens_details": [
+      {
+        "modality": "TEXT",
+        "token_count": 368
+      }
+    ],
+    "thoughts_token_count": null,
+    "tool_use_prompt_token_count": null,
+    "tool_use_prompt_tokens_details": null,
+    "total_token_count": 696,
+    "traffic_type": null
+  },
+  "api_success": true,
+  "seconds": 2.372
+}

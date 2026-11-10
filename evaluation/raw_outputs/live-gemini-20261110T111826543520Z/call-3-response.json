@@ -1,0 +1,29 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "mode": "live-gemini",
+  "attempt": 3,
+  "raw_text": "{\n  \"topic\": \"rental_deposit\",\n  \"confidence\": 0.95,\n  \"risk_flags\": [],\n  \"facts\": [\n    {\n      \"name\": \"deposit_paid\",\n      \"value\": \"INR 20000\",\n      \"quote\": \"Maine landlord ko INR 20000 security deposit diya tha.\"\n    },\n    {\n      \"name\": \"problem\",\n      \"value\": \"Room khaali kar diya, lekin paise wapas nahi mile.\",\n      \"quote\": \"Room khaali kar diya, lekin paise wapas nahi mile.\"\n    },\n    {\n      \"name\": \"state\",\n      \"value\": \"Maharashtra\",\n      \"quote\": \"Main Maharashtra mein rehta hoon.\"\n    }\n  ]\n}",
+  "finish_reasons": [
+    "FinishReason.STOP"
+  ],
+  "usage": {
+    "cache_tokens_details": null,
+    "cached_content_token_count": null,
+    "candidates_token_count": 179,
+    "candidates_tokens_details": null,
+    "prompt_token_count": 357,
+    "prompt_tokens_details": [
+      {
+        "modality": "TEXT",
+        "token_count": 357
+      }
+    ],
+    "thoughts_token_count": null,
+    "tool_use_prompt_token_count": null,
+    "tool_use_prompt_tokens_details": null,
+    "total_token_count": 536,
+    "traffic_type": null
+  },
+  "api_success": true,
+  "seconds": 1.722
+}

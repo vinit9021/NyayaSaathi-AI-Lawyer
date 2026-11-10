@@ -1,0 +1,7 @@
+{
+  "mode": "mock",
+  "case_id": "mock_transcription_failure",
+  "timestamp_utc": "2026-11-10T11:18:20.313934+00:00",
+  "error": "timeout",
+  "actual_safe_message": "Transcription timed out. Please use text or record again later."
+}

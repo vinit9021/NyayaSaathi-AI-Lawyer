@@ -1,0 +1,10 @@
+[
+  {"id":"live_consumer","topic":"consumer","amount_field":"amount_paid","amount":"3500","turns":[
+    "I purchased a mixer grinder online from FictionalShop for INR 3500. It arrived damaged. I have an invoice and photos. The seller refused a refund. I live in Maharashtra and want my money back.",
+    "Correction: I paid INR 3600. The purchase date was 2026-10-20 and the delivery date was 2026-10-23."
+  ]},
+  {"id":"live_rental","topic":"rental_deposit","amount_field":"deposit_paid","amount":"20000","turns":[
+    "Maine landlord ko INR 20000 security deposit diya tha. Room khaali kar diya, lekin paise wapas nahi mile. Main Maharashtra mein rehta hoon.",
+    "मेरे पास जमा राशि की रसीद और मकान मालिक के संदेश हैं। मैं जमा राशि वापस चाहता हूँ।"
+  ]}
+]
