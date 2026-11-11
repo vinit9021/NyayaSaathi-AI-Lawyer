@@ -1,233 +1,833 @@
-# NyayaSaathi — AI Lawyer for Everyday Legal Problems in India
 
-Legal-information prototype for online shopping complaints and rental security-deposit disputes. **Not a licensed lawyer. Fictional cases only.**
+# ⚖️ NyayaSaathi — AI Legal Assistant for Everyday Problems in India
 
-## Milestone 4 status
+### An AI-powered, multilingual legal-information assistant built for the KukuFM AI Generalist Take-Home Assignment
 
-Implemented: text chat, English/Hindi responses, English/Hindi/Hinglish intake through structured extraction, session context, bulk fact review, short follow-ups, evidence checklists, expandable source-backed information, and two editable text-document workflows. No voice or public deployment is claimed. One synthetic live consumer workflow was exercised before Milestone 4; this is not a broad model-quality evaluation. Milestone 4 testing is entirely offline; no new live API calls or dependencies were needed.
+NyayaSaathi helps people understand common legal problems in simple language, organize relevant facts, explore practical next steps, and prepare editable complaint drafts.
 
-Gemini returns classification and proposed facts, never unrestricted legal prose. Extracted values must appear in verbatim current-message quotes. Users explicitly confirm or correct proposals; confirmation records an assertion, not independent proof. Conflicting details preserve prior confirmed values until reviewed. Missing details remain unknown.
+The application supports **English, Hindi, and Hinglish** through text and voice input. It uses Google Gemini for conversational AI, Groq Whisper for speech recognition, and a curated collection of official Indian legal-information sources to ground its responses.
 
-All legal output is fixed reviewed catalogue text selected from actually retrieved eligible sources, with stored URLs, locators, review dates, and caveats. Four active guidance sources cover NCH routing/online shopping, NALSA referrals, and PIB model-tenancy context. No statutory entitlement, refund deadline, deposit cap, judgment, or guaranteed outcome is enabled. See [source coverage](sources/README.md) and [verification log](sources/VERIFICATION_LOG.md).
+> **Disclaimer:** NyayaSaathi is an AI legal-information prototype, not a licensed lawyer. It does not provide legal representation or guarantee legal outcomes. The public demonstration is intended for fictional cases only. Do not submit real personal or sensitive legal information.
 
-## Windows PowerShell setup
+---
 
-Use Python **3.12**, Git, and PowerShell. No Docker, WSL, activation, or execution-policy change. From the repository root, for a fresh environment:
+## 🌐 Live Application
 
-```powershell
-python --version
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m pip check
-.\.venv\Scripts\python.exe -m streamlit run app.py
-```
+### [🚀 Try NyayaSaathi — AI Lawyer](https://nyayasaathi-ai-lawyer.onrender.com)
 
-For the existing installed environment, run only the final command. Open the local URL printed by Streamlit; stop with Ctrl+C. Select a language, then type or record a fictional supported issue. The app uses the configured live Gemini provider automatically; opening the app sends no API request.
+**Deployed URL:** https://nyayasaathi-ai-lawyer.onrender.com
 
-## Hugging Face Docker Space deployment
+**GitHub Repository:** https://github.com/vinit9021/NyayaSaathi-AI-Lawyer
 
-The production container is defined in [Dockerfile](Dockerfile), binds
-Streamlit to `0.0.0.0:7860` for Hugging Face, and includes the reviewed catalogue under
-[`sources/`](sources/). Space metadata and the separate Space-repository
-copy workflow are documented in [deployment/README.md](deployment/README.md);
-the root GitHub README remains the project documentation.
+The application is deployed on **Render** and can be accessed directly through a web browser.
 
-## Render native Python web service
+No installation, account creation, or personal API key is required to use the deployed prototype.
 
-Render should use a **Web Service** with the native Python runtime, not the
-Dockerfile. The checked-in [render.yaml](render.yaml) contains the equivalent
-configuration:
+**Note:** The application uses Render's free hosting tier, so its first request after a period of inactivity may take longer while the service starts.
 
-- **Build command:** `pip install -r requirements.txt`
-- **Start command:** `streamlit run app.py --server.address=0.0.0.0 --server.port=$PORT --server.headless=true`
+---
 
-The start command uses Render's platform-provided `PORT`; the shared
-[Streamlit config](.streamlit/config.toml) intentionally does not hardcode a
-port. The Dockerfile's `7860` remains isolated to Hugging Face Docker Spaces
-and is not used by this native Render service.
+## 📌 Project Overview
 
-In the Render service's environment settings, add these variables without
-committing their values:
+Legal information is often difficult for ordinary people to understand because of complex terminology, language barriers, fragmented resources, and uncertainty about the appropriate next steps.
 
-| Variable | Required value |
-| --- | --- |
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `GEMINI_MODEL` | An account-available structured-output Gemini model |
-| `GROQ_API_KEY` | Groq API key for browser microphone transcription |
-| `GROQ_MODEL` | `whisper-large-v3-turbo` |
-| `APP_MODE` | `production` |
-| `LLM_PROVIDER` | `gemini` |
+Many people face everyday disputes involving defective products, online shopping refunds, and rental security deposits but may not know how to organize their complaints or identify the right resources.
 
-Render does not need Streamlit secrets or a committed `.env`. The application
-automatically uses Gemini in production, with no simulation/mode selector.
-Text, voice transcription with confirmation, curated legal grounding, case
-summaries, editable drafts, and safety boundaries remain unchanged. Do not
-deploy or make live provider calls as part of configuration verification.
+**NyayaSaathi aims to make initial legal-information assistance more accessible.**
 
-### Offline test fixtures
+Instead of acting as a general-purpose lawyer covering all Indian laws, the application focuses on two common problem categories and handles them through a structured conversational workflow.
 
-Offline simulation is available only through test fixtures and mocks; it is not a user-facing application mode and is never used as a live-provider fallback. Tests need no keys or network. The deterministic fixture recognizes limited topic words and optional field labels:
+The system helps users:
+
+- Describe a legal problem in everyday language.
+- Communicate in English, Hindi, or Hinglish.
+- Record spoken queries using a microphone.
+- Answer relevant follow-up questions.
+- Review and correct extracted case information.
+- Identify missing facts and supporting evidence.
+- Access source-grounded legal information.
+- Generate editable complaint or repayment-request drafts.
+- Recognize when professional legal assistance is necessary.
+
+The goal is to create a useful, transparent, and narrowly scoped AI-powered legal assistant rather than an unrestricted legal chatbot.
+
+---
+
+## 🎯 Supported Use Cases
+
+NyayaSaathi intentionally focuses on **two categories of everyday legal problems in India**.
+
+### 1. Consumer Complaints
+
+The application supports common consumer disputes involving online purchases.
+
+**Examples:**
+
+- A defective product delivered after an online purchase.
+- A damaged item received from an online seller.
+- A seller refusing a requested refund.
+- Non-delivery of an ordered product.
+- Problems communicating with a seller or shopping platform.
+
+**Example Query:**
+
+> I purchased headphones online for ₹4,500. They arrived damaged, and the seller is refusing my refund. I have the invoice and photographs. I live in Delhi. What should I do?
+
+**How NyayaSaathi helps:**
+
+1. Recognizes the issue as a consumer complaint.
+2. Extracts the purchase amount, problem, seller information, and available evidence.
+3. Requests important missing details.
+4. Presents relevant information from approved consumer-help resources.
+5. Suggests practical, non-guaranteed complaint options.
+6. Helps prepare an editable complaint or refund-request letter.
+
+### 2. Rental Security Deposit Disputes
+
+The application supports disputes involving landlords withholding or disputing the repayment of rental security deposits.
+
+**Examples:**
+
+- A landlord refusing to return a security deposit.
+- Disputed deductions from a rental deposit.
+- Delayed repayment after a tenant vacates a property.
+- Disagreements involving rental agreements and payment records.
+
+**Example Query:**
+
+> Maine Chandigarh mein ek room rent par liya tha aur landlord ko ₹20,000 security deposit diya tha. Maine room khaali kar diya, lekin landlord paise wapas nahi kar raha. Mere paas rent agreement aur UPI payment proof hai.
+
+**How NyayaSaathi helps:**
+
+1. Identifies the rental-deposit dispute.
+2. Collects the deposit amount, location, tenancy details, and available evidence.
+3. Asks for missing information such as the move-out date or landlord's explanation.
+4. Organizes the user's statements into a structured case summary.
+5. Explains relevant options while acknowledging jurisdiction-specific uncertainty.
+6. Generates an editable deposit-repayment request.
+
+**Important:** Rental regulations can differ between Indian states and Union Territories. The application does not assume that a particular state law applies throughout India or promise a statutory repayment deadline without verified support.
+
+---
+
+## 🚫 Out of Scope
+
+NyayaSaathi is **not designed to cover all of Indian law**.
+
+The following are outside the current prototype's scope:
+
+- Criminal defence and criminal litigation.
+- Divorce, child custody, and complex family-law matters.
+- Complex property ownership and title disputes.
+- Court representation or preparation of litigation strategy.
+- Emergency legal proceedings.
+- Complex commercial disputes.
+- Guaranteed legal opinions or predictions of case outcomes.
+- Automatic submission of complaints, notices, or court documents.
+
+For unsupported, urgent, or high-risk issues, the application directs users toward qualified legal assistance.
+
+---
+
+## ✨ Key Features
+
+### 💬 Conversational Legal Assistance
+
+Users describe their problems through a chat interface.
+
+Google Gemini processes the conversation and helps identify the nature of the dispute, collect missing information, and provide relevant responses.
+
+The assistant maintains case context throughout the current session and asks focused follow-up questions.
+
+### 🎙️ Multilingual Voice Input
+
+NyayaSaathi supports browser-based microphone recording.
+
+The audio is processed using **Groq Whisper Large V3 Turbo**, which converts speech into text.
+
+Supported input scenarios include:
+
+- English speech.
+- Hindi speech.
+- Hindi-English mixed speech (Hinglish).
+
+The user can review and edit the transcription before submitting it to the legal assistant.
+
+Voice transcription is not assumed to be perfectly accurate. Names, amounts, dates, and other important details should be checked before confirmation.
+
+### 🌐 Multilingual Interaction
+
+Users can communicate using English, Hindi, or Hinglish.
+
+The application includes English and Hindi response-language preferences.
+
+### 🧾 Structured Case Intake
+
+The assistant collects and organizes information such as:
+
+- Problem description.
+- Purchase or deposit amount.
+- Relevant dates.
+- Seller or landlord details.
+- Indian state or location.
+- Previous communication attempts.
+- Supporting evidence.
+- Desired resolution.
+
+Extracted facts remain subject to user review.
+
+### ✅ Fact Confirmation and Correction
+
+The application distinguishes user-provided statements from independently established facts.
+
+Users can confirm or correct extracted details.
+
+Conflicting information is handled conservatively rather than silently overwriting previously confirmed facts.
+
+### 📚 Source-Grounded Legal Information
+
+NyayaSaathi uses a curated legal-information catalogue instead of relying entirely on the language model's internal knowledge.
+
+The system provides references to approved sources and avoids presenting unsupported legal provisions as verified facts.
+
+### 📋 Evidence Checklist
+
+The application helps users identify potentially relevant supporting documents.
+
+For consumer complaints, examples include invoices, receipts, delivery records, photographs, and seller communications.
+
+For rental disputes, examples include rental agreements, deposit-payment records, move-out communications, and landlord correspondence.
+
+### 📝 Editable Legal Document Drafts
+
+NyayaSaathi can prepare:
+
+1. Consumer complaint and refund-request drafts.
+2. Rental security deposit repayment-request drafts.
+
+Generated documents can be reviewed, edited, and downloaded as UTF-8 text files.
+
+Missing information remains visible rather than being invented.
+
+**Documents are never automatically sent, filed, or submitted.**
+
+### 🛡️ Legal Safety and Error Handling
+
+The application includes safeguards for:
+
+- Unsupported legal problems.
+- High-risk requests.
+- Unverified legal claims.
+- Fabricated or irrelevant citations.
+- Missing case information.
+- Conflicting user statements.
+- Invalid AI-generated structured data.
+- API timeouts and temporary provider failures.
+
+If live AI services are unavailable, the application displays an error instead of silently substituting simulated responses.
+
+---
+
+## 🏗️ Technology Stack
+
+| Component | Technology | Purpose |
+|---|---|---|
+| Programming language | Python 3.12 target | Application implementation |
+| Frontend | Streamlit | Interactive web interface |
+| Conversational AI | Google Gemini | Case understanding, extraction, and conversational responses |
+| LLM integration | Google GenAI SDK | Gemini API communication |
+| Speech recognition | Groq Whisper Large V3 Turbo | Multilingual speech-to-text |
+| Voice API | Groq Python SDK | Audio transcription |
+| Case management | Python models and Streamlit Session State | Structured facts and conversation context |
+| Legal information | Curated JSON source catalogue | Source-grounded legal responses |
+| Document drafting | Python templates | Editable complaint and repayment requests |
+| Configuration | Environment variables and python-dotenv | Secure configuration loading |
+| Testing | Pytest and Streamlit AppTest | Automated and UI validation |
+| Version control | Git and GitHub | Source management |
+| Deployment | Render | Public web application hosting |
+
+**Configured Gemini model during development:** `gemini-3.5-flash-lite`
+
+The model identifier is configurable and can be changed without redesigning the application's legal workflow.
+
+---
+
+## ⚙️ System Architecture
+
+NyayaSaathi separates conversational understanding from deterministic validation and legal-source handling.
 
 ```text
-online refund; seller: FictionalShop; amount_paid: 5000; state: Maharashtra
+                    USER
+                     |
+             Text Input / Voice
+                     |
+         +-----------+-----------+
+         |                       |
+      Text Chat             Audio Recording
+         |                       |
+         |                Groq Whisper API
+         |                       |
+         |               Editable Transcript
+         |                       |
+         +-----------+-----------+
+                     |
+              Streamlit UI
+                     |
+             Conversation Engine
+                     |
+          Scope and Safety Screening
+                     |
+               Gemini LLM
+                     |
+            Structured Extraction
+                     |
+          Fact / Provenance Validation
+                     |
+           Case State and Follow-ups
+                     |
+          Curated Legal Source Retrieval
+                     |
+           Grounded Legal Information
+                     |
+             Case Review and Drafting
+                     |
+             Editable Document
+                     |
+               User Download
 ```
 
-Then `purchase_date: 2026-10-01; desired_outcome: refund`. Open **Review all details**, edit the fields together, and click **Confirm entered details** once. Dates require YYYY-MM-DD; INR amounts require digits without commas. Use the field's **Unknown** checkbox to explicitly clear a value. Blank untouched fields stay absent. Rental example: `landlord deposit; deposit_paid: 20000; state: Maharashtra`.
+### AI Responsibilities
 
-Simulation language understanding is limited. Natural-language Hindi/Hinglish fixtures exercise the engine, but do not establish real Gemini quality. No provider error silently switches to simulation.
+The language model is used for:
 
-### Review and download a draft
+- Understanding natural-language questions.
+- Interpreting English, Hindi, and Hinglish inputs.
+- Identifying the likely dispute category.
+- Proposing structured case information.
+- Supporting conversational follow-up questions.
 
-1. Describe a fictional supported case. Chat asks at most two follow-ups at a time; detailed claims and citations are under **Legal information and sources**.
-2. Review the compact case summary. **Missing** means absent/unknown; **Awaiting confirmation** means information was supplied but not yet approved by you. Resolve conflicts in the bulk form; prior confirmed values remain protected until you submit corrections.
-3. Confirm the details to use. Optional name/contact, seller or landlord, product/order reference, rental property and agreement date can be entered in the same form. Do not use real private identifiers in this prototype.
-4. Click **Generate / regenerate draft**. Choose the dispute by describing it in chat; the correct template follows the assessed case topic. Consumer drafts address the seller/platform and request a refund/resolution. Rental drafts request deposit repayment or a written, itemized explanation.
-5. Review important missing fields and all `[Please provide: ...]` placeholders. Partial drafts can be downloaded, but must be completed and checked before use. Unconfirmed information is never silently promoted into the letter.
-6. Edit the draft, open **Preview**, acknowledge review, and click **Download text**. Downloads are UTF-8 `.txt`; no PDF dependency, automatic sending, filing, or emailing. A non-removable export notice identifies unverified statements and user responsibility.
+### Deterministic Code Responsibilities
 
-Edits stay in the current session and do not alter confirmed facts. Editing requires fresh review; changing the case disables the old download until you explicitly regenerate. Regeneration replaces draft edits. New cases clear both facts and drafts. Separate sessions do not share them. Draft templates are in English with bilingual field labels; your statements retain their original language. Full Hindi document composition is not claimed.
+Application code handles:
 
-Drafting requires a successful scope/safety assessment. Unsupported/urgent matters, unresolved conflicts, injection attempts and detected legal claims are blocked. The conservative text screen may also reject ordinary wording such as a fixed number of days or risk-related words; it cannot certify every possible user edit. No statute, deadline, judgment, guarantee, legal threat or state-specific entitlement is generated. Missing legal sources still permit neutral factual requests, not verified legal advice. Confirmation means the user affirmed a statement, not that evidence or legal rights were independently verified.
+- Validating extracted case facts.
+- Tracking confirmed information.
+- Checking supported scope.
+- Enforcing citation restrictions.
+- Retrieving approved legal-source records.
+- Preserving session state.
+- Controlling document-generation eligibility.
+- Handling external API failures.
+- Preventing duplicate submissions.
 
-### Live Gemini provider
+This separation reduces dependence on unrestricted model-generated legal assertions.
 
-Securely configure `GEMINI_API_KEY` and `GEMINI_MODEL` through environment variables, an ignored repository-root `.env`, or root-level Streamlit secrets. `.env.example` contains placeholders only. Never paste keys into chat, screenshots, or Git. Select an account-available model supporting structured JSON output; no model ID is baked in or silently substituted.
+---
 
-The application automatically uses Gemini for submitted fictional text and case context. Missing configuration disables chat and shows guidance; it never switches to simulation. Account model availability, quota, billing, and provider privacy terms require verification. `gemini-3.5-flash-lite` succeeded in a minimal test and a synthetic workflow on 9–10 November 2026 (India time); it is the locally configured model. Other accounts must verify their own access. The adapter uses the [official Google Gen AI SDK](https://googleapis.github.io/python-genai/).
+## 📚 Legal Information Sources
 
-| Setting | Default/purpose |
-| --- | --- |
-| `LLM_PROVIDER` | `gemini`; required for the application |
-| `GEMINI_MODEL` | Unset; configure an available structured-output model |
-| `GEMINI_API_KEY` | Unset; real Gemini only |
-| `GROQ_API_KEY` | Unset; unused until voice implementation |
-| `LLM_TIMEOUT_SECONDS` | 30 per attempt by default; range 1–90; local verified configuration uses 90 |
-| `LLM_MAX_RETRIES` | 1; range 0–1; transient timeout/network/server failures only |
-| `LLM_MAX_OUTPUT_TOKENS` | 2048; range 1–8192; also capped by request |
+The curated source catalogue includes reviewed material from:
 
-Precedence: environment > Streamlit secrets > explicit root `.env` > defaults. Blank values override lower priorities; dotenv interpolation is disabled. Safe errors cover missing/invalid credentials, quota, timeouts, network failures and malformed output; confirmed facts remain intact. At most one transient retry uses exponential backoff with jitter. HTTP 429 is retried only with provider retry guidance and no detected daily, zero, spending, or unknown quota violation. Authentication, invalid requests, and ambiguous quota failures are not retried. Retry-After seconds/HTTP dates and Google RetryInfo are respected; waits over 30 seconds stop instead of retrying too early. SDK retries are disabled to prevent multiplication. With a 90-second timeout and one retry, a turn can take approximately 210 seconds; HTTP transport timeouts are not a strict overall wall-clock deadline. Retries may incur charges; no free quota is assumed. Model selection is explicit configuration, never automatic cross-model or simulated fallback.
+- **National Consumer Helpline (NCH)** — Consumer grievance guidance and selected consumer information.
+- **National Legal Services Authority (NALSA)** — Legal-aid and referral information.
+- **Government of India tenancy-related resources** — Limited contextual information about tenancy frameworks.
+- **Selected consumer-regulation references** — Used only within their verified applicability and catalogue restrictions.
 
-Live repair evidence: 3.8 Flash returned HTTP 504 after 59.331 seconds; 3.5 Flash-Lite returned the minimal expected text in 1.804 seconds. Its single consumer workflow took 7.139 seconds (304 input / 121 output tokens). The model omitted product and seller refusal from structured fields. An offline replay of its unchanged response now verifies verbatim narrative retention and recovery of a single omitted communication sentence. Those supplements remain unconfirmed assertions, not independently verified facts. Multiple/long communication statements remain for review; this limited rule is not a universal semantic extractor. No additional live call was made after that fix. Original unedited diagnostic records remain in ignored `tmp/`; the synthetic response used for regression is in `tests/fixtures/gemini_consumer_live.json`.
+Official websites:
 
-Future Community Cloud deployment uses `app.py`, Python **3.12**, runtime `requirements.txt`, and dashboard Secrets. See [Streamlit secrets documentation](https://docs.streamlit.io/develop/concepts/connections/secrets-management). Deployment remains Milestone 7 and is untested.
+- National Consumer Helpline: https://consumerhelpline.gov.in/
+- National Legal Services Authority: https://nalsa.gov.in/
+- India Code: https://www.indiacode.nic.in/
+- Department of Consumer Affairs: https://consumeraffairs.nic.in/
 
-## Architecture and safeguards
+These websites are reference resources. Their inclusion does not imply that every page or provision is active in the application's verified catalogue.
 
-`app.py` owns session-local immutable `CaseState`. `conversation.py` orchestrates screening, extraction, merging, follow-ups, retrieval and grounding. `extraction.py` validates provenance, conflicts and confirmation. Business logic uses `LLMClient.generate(LLMRequest) -> LLMResponse`; SDK types stay in the Gemini adapter. A replacement provider needs an adapter/factory registration; Gemini model changes use configuration.
+See `sources/catalogue.json` and `sources/README.md` for the project's source records, verification information, and limitations.
 
-Deterministic screening precedes the model and remains the final boundary. Structured semantic assessment supplements it; confidence below 0.8 triggers clarification. Self-reported confidence is not calibrated. High-risk decisions persist until reset. Criminal/family cases, complex property litigation, court representation, urgent proceedings, danger and unsupported requests escalate. Conservative keyword rules can produce false positives (including negation) and miss novel wording.
+---
 
-Only confirmed state informs jurisdiction-specific retrieval; conflicting state is treated as unknown. No rental statutory rule is active even with a known state. Missing, stale or unverified sources disable claims and show uncertainty. No arbitrary model prose, citation, statute or judgment is rendered as a legal explanation. This prevents model-invented citations from reaching legal output; it does not guarantee legal accuracy or semantic classification. Catalogue expiry dates require actual source re-review.
+## 🚀 Run the Project Locally
 
-Memory is session-only: at most 20 submissions and 40 retained messages, plus facts and persistent risk flags. Refresh may lose it. New case and mode changes clear context. No database, application chat logging, shared user-state cache, audio retention, private evidence upload, or automatic filing exists. External provider policies still apply.
+### Prerequisites
 
-## Offline verification
+Install the following:
 
-### Structured intake reliability (current behavior)
+- Python 3.12 (recommended for the project's tested local environment).
+- Git.
+- A code editor such as Visual Studio Code.
+- A valid Gemini API key.
+- A Groq API key for voice transcription.
+- An internet connection for live AI requests.
 
-The parser now validates safety metadata separately from optional fact rows.
-One invalid row no longer discards valid sibling facts. The application keeps
-only facts supported by the current user message, never auto-confirms them,
-and asks concise clarifications for rejected fields. A rejected update to an
-existing fact preserves its old value and requires review before drafting.
+### Step 1 — Clone the GitHub Repository
 
-| Variation | Behavior |
-| --- | --- |
-| Missing fact list or optional fact, model null | Remains absent; no guessed value or automatic “unknown” answer |
-| Bad row shape/type, extra row properties, invented value/quote | Drop that row; keep independent valid facts; show static check codes |
-| Whitespace differences | Find and retain the original user span; no fuzzy matching |
-| INR 4500 versus ₹4,500 | Accept only an equal, unambiguous amount token; retain user formatting for review |
-| Translated/inferred locations or reformatted dates | Require literal support; otherwise clarify rather than infer |
-| Narrative paraphrase | Retain only its exact short user quote, never the model's paraphrase |
-| Duplicate fields | Dedupe identical rows; quarantine conflicting single-value rows; combine supported evidence/communications only as an exact user passage |
-| Invalid safety envelope, extra root claims/citations, truncated/filtered output | Reject the response without changing facts; never bypass safety |
-| Complete JSON fence/BOM | One local cleanup; no additional API request |
+Open PowerShell or a terminal and execute:
 
-Dates and amounts still require explicit review before draft use. Original
-comma-formatted amounts must be entered without commas in the confirmation form.
-Schema compliance is not proof of semantic truth; Google's
-[structured-output documentation](https://ai.google.dev/gemini-api/docs/structured-output)
-also requires application-side validation. No schema can prove arbitrary legal
-claims; the separate catalogue-only legal rendering remains unchanged.
+```bash
+git clone https://github.com/vinit9021/NyayaSaathi-AI-Lawyer.git
+cd NyayaSaathi-AI-Lawyer
+```
 
-The interface shows an application build and intake-contract version, plus a
-notice when a retained session sees changed application files. Restart Streamlit
-and use New case for a fresh reviewer test; no evidence establishes that a stale
-session caused the observed provider-output failures. The app was restarted on
-`http://127.0.0.1:8501` during verification. Existing case data is session-only.
+### Step 2 — Create a Virtual Environment
 
-Four newly authorized real requests tested two two-turn Streamlit conversations
-with `gemini-3.5-flash-lite` (2,048 output-token cap, 90-second timeout, zero retries):
-
-| Conversation | Turn 1 latency | Turn 2 latency | Observed result |
-| --- | --- | --- | --- |
-| English consumer | 2.936 s | 2.245 s | Both turns responded; confirmed INR 4500 preserved and INR 4600 correction flagged; repeated evidence rows were withheld |
-| Hinglish/Hindi rental | 1.790 s | 2.267 s | Both turns responded with clarifications; deposit/state/evidence model fields failed provenance and were withheld; user-reviewed deposit survived turn 2 |
-
-All four outputs used only catalogue guidance, retained case state on reruns,
-and made no duplicate request. This verifies real two-turn operation, **not
-complete extraction or broad live reliability**. The later multi-item evidence
-combination and additional boundary hardening were tested offline only; no
-extra live requests were made. The final offline regression suite passed
-403 tests; compilation and dependency checks passed.
-Shape/code/timing diagnostics (no raw content)
-are in ignored `tmp/intake-stability-20261110T062131Z/diagnostics.json`.
-Previously captured synthetic records below remain unchanged.
-
-Remaining failures are explicit: ambiguous money/dates, translated or unsupported
-quotes, rejected optional rows, unknown state names, invalid safety metadata,
-truncation, and provider errors may require user correction or resubmission.
-Provenance establishes textual support, not correctness of the model's field
-assignment, legal accuracy, or independent proof of a user's allegation.
-
-Live intake diagnostic (10 November 2026): the real Streamlit Gemini path
-intermittently rejected valid JSON when the model paraphrased a `problem` value
-despite providing an exact user quote. The parser previously rejected the whole
-turn, including valid amounts. Simulation emitted literal values and did not
-exercise this mismatch. The parser now discards the problem paraphrase and uses
-only its exact, short current-message quote as an **unconfirmed** assertion.
-Other fields still require literal provenance; invented quotes remain rejected.
-Empty null placeholders are omitted, never marked as answered. The requested
-schema now specifies nonempty quotes and the existing 500-character value limit.
-No SDK, model, API key, or legal-source enforcement was changed.
-
-Validation failures display only static diagnostic codes (`intake_shape`,
-`fact_shape`, `fact_provenance`, or `intake_internal`), never raw provider errors
-or private content. Recovery is local and makes no additional model requests.
-Use New case when retesting after a restart. To restart the local app, stop its
-PowerShell process with Ctrl+C, then run
-`.\.venv\Scripts\python.exe -m streamlit run app.py` from the repository root.
-Select Gemini and consent to synthetic testing; simulation is a separate mode.
-
-The six authorized diagnostic calls used `gemini-3.5-flash-lite`, 2,048 maximum
-output tokens, a 90-second timeout and zero retries. Initial A/B/C UI tests all
-passed; the English rental rerun reproduced the provenance failure. Raw fictional
-outputs remain unchanged in ignored `tmp/gemini-ui-*` directories. Offline UI
-regressions exercise the actual factory and Gemini adapter with only the SDK
-transport mocked; they do not prove final live verification.
-
-After the provenance fix, one separately approved seventh request succeeded
-through Streamlit's real Gemini path in 3.664 seconds (342 input / 150 output
-tokens). It extracted the INR 20000 deposit, asked for the missing state, and
-rendered only approved catalogue claims with rental-law uncertainty. State
-survived a UI rerun without another request. The full offline suite passed
-313 tests. This is narrow synthetic verification, not a guarantee for all inputs.
+On Windows PowerShell:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_extraction.py tests/test_conversation.py tests/test_llm.py -q
-.\.venv\Scripts\python.exe -m pytest tests/test_ui.py -q
-.\.venv\Scripts\python.exe -m pytest tests/test_drafting.py tests/test_ui.py -q
-.\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe -m compileall -q app.py nyayasaathi tests
-.\.venv\Scripts\python.exe -m pip check
+py -3.12 -m venv .venv
 ```
 
-Tests block outbound sockets and inject synthetic responses, including an unchanged real response to a fictional case. They cover context, multilingual intake, contradictions/corrections, missing facts/sources, risks/injection, fabricated citations, provider errors/retries, UI confirmation/reset, consent and separate sessions, plus all Milestone 1/2 regressions. They do not prove broad live model quality, legal accuracy or cloud operation. The full evaluation runner remains Milestone 6 work.
+On Linux or macOS with Python 3.12 installed:
 
-Runtime direct dependencies remain pinned; Pytest is in `requirements-dev.txt`. Transitive dependencies are not fully locked. No new dependencies were needed for Milestone 3.
+```bash
+python3.12 -m venv .venv
+```
 
-## Repository and next milestone
+### Step 3 — Activate the Virtual Environment
 
-Never commit credentials, private cases, evidence, audio or assignment PDFs. Secrets, virtual environments, private-data directories, caches and PDFs remain ignored; only `.env.example` is exempted. Stage exact paths.
+**Windows PowerShell:**
 
-See [requirements](PROJECT_REQUIREMENTS.md), [architecture](ARCHITECTURE.md), [plan](IMPLEMENTATION_PLAN.md), and [agent instructions](AGENTS.md). Next: **Milestone 5 — Voice and failure handling**. It has not started.
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Linux/macOS:**
+
+```bash
+source .venv/bin/activate
+```
+
+If PowerShell blocks the activation script, use the virtual environment's Python executable directly instead of changing system-wide execution settings.
+
+### Step 4 — Install Dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### Step 5 — Configure API Keys
+
+Create a local `.env` file in the project root.
+
+Add the following configuration:
+
+```dotenv
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.5-flash-lite
+
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=whisper-large-v3-turbo
+
+APP_MODE=production
+LLM_PROVIDER=gemini
+```
+
+Replace the placeholder key values with your own credentials.
+
+**Gemini API key:** https://aistudio.google.com/api-keys
+
+**Groq API key:** https://console.groq.com/keys
+
+The `.env` file must remain private and must never be committed to GitHub.
+
+The API key must have access to the configured model. Model availability and quota limits can vary across accounts.
+
+### Step 6 — Launch the Application
+
+From the project root:
+
+```bash
+streamlit run app.py
+```
+
+If Streamlit is not found as a command, run:
+
+```bash
+python -m streamlit run app.py
+```
+
+### Step 7 — Open the Application
+
+Visit:
+
+http://localhost:8501
+
+You should see the NyayaSaathi chat interface.
+
+There is no requirement to choose between Gemini and Offline Simulation. The application automatically uses the configured live Gemini provider.
+
+---
+
+## 🧑‍💻 How to Use NyayaSaathi
+
+### Text Conversation
+
+1. Open the application.
+2. Select the preferred response language if necessary.
+3. Describe a fictional legal problem.
+4. Submit the message.
+5. Review the AI-generated follow-up questions.
+6. Provide missing details.
+7. Review and confirm the case facts.
+8. Explore relevant source-backed information.
+9. Generate an editable document when appropriate.
+
+### Voice Conversation
+
+1. Expand **Speak your problem / अपनी समस्या बोलें**.
+2. Allow microphone access in your browser.
+3. Record your fictional problem.
+4. Submit the recording for transcription with the required permission.
+5. Review the generated transcript.
+6. Correct mistakes in names, amounts, dates, or locations.
+7. Confirm and submit the transcript.
+8. Continue the same conversational legal-assistance workflow.
+
+### Document Generation
+
+1. Complete the relevant case-intake questions.
+2. Review and confirm the extracted details.
+3. Open the drafting section.
+4. Generate the supported document.
+5. Edit the text if required.
+6. Review the final draft and acknowledge its limitations.
+7. Download the document.
+
+The application does not automatically contact sellers, landlords, lawyers, or government portals.
+
+---
+
+## 🧪 Testing and Evaluation
+
+NyayaSaathi includes automated tests for the application components and end-to-end workflow behavior.
+
+### Run All Tests
+
+From the project root:
+
+```bash
+python -m pytest -q
+```
+
+### Run Evaluation-Specific Tests
+
+```bash
+python -m pytest tests/test_evaluation.py -v
+```
+
+### Python Compilation Check
+
+```bash
+python -m compileall -q app.py nyayasaathi tests
+```
+
+### Dependency Consistency Check
+
+```bash
+python -m pip check
+```
+
+### Recorded Development Verification
+
+During Render deployment preparation, the automated test suite reported:
+
+**437 tests passed**
+
+This result reflects the repository state at that checkpoint and may change as tests are added or updated.
+
+The suite includes tests for:
+
+- Consumer and rental case handling.
+- Multi-turn conversations.
+- Fact extraction and corrections.
+- English, Hindi, and Hinglish inputs.
+- Unsupported legal requests.
+- Citation enforcement.
+- Invalid structured responses.
+- Missing or contradictory information.
+- Document drafting and downloads.
+- Voice transcription integration.
+- API failures and duplicate-request prevention.
+- Streamlit UI behavior.
+- Deployment configuration.
+
+### Live Model Evaluation
+
+The application was also evaluated using controlled synthetic scenarios with the real Gemini and Groq APIs.
+
+Observed results included:
+
+- Successful multi-turn consumer conversations.
+- Successful rental-dispute conversations.
+- Preservation of case context across turns.
+- Rejection of unsupported model-generated facts.
+- Successful English speech transcription.
+- Hinglish transcription with some pronunciation and transcription errors requiring user correction.
+
+Some extracted facts required additional clarification, and not every model response was fully reliable.
+
+These are genuine limitations of the prototype and are not hidden by the automated test results.
+
+### Raw Evaluation Outputs
+
+Evaluation code and recorded output artifacts are organized under:
+
+```text
+evaluation/
+├── test_cases/
+├── raw_outputs/
+├── run.py
+└── run_speech.py
+```
+
+The raw-output records distinguish:
+
+- Live Gemini tests.
+- Live Groq transcription tests.
+- Offline simulated tests.
+
+Only genuine executed test outputs should be presented as actual results. Mocked or simulated output must not be represented as live model behavior.
+
+The availability of these records in the public repository depends on whether the reviewed evaluation artifacts have been committed.
+
+---
+
+## 🔐 Privacy and Security
+
+NyayaSaathi uses external AI providers to process user-submitted content.
+
+Important safeguards include:
+
+- API keys loaded from server-side environment variables.
+- No API credentials required from reviewers.
+- No API keys hardcoded into application source files.
+- Session-only case state rather than permanent application-side case storage by default.
+- Transcript confirmation before legal processing.
+- No permanent audio recording storage by default.
+- Input-size and request controls.
+- Restricted legal-information coverage.
+- Validation of extracted case facts.
+- Conservative handling of uncertain legal claims.
+- No automatic filing or delivery of generated documents.
+
+The model providers' own data-processing and retention policies still apply.
+
+**The deployed prototype is intended for fictional examples only. Users should not submit real names, addresses, identity documents, or sensitive legal records.**
+
+---
+
+## ☁️ Deployment
+
+### Production Platform: Render
+
+NyayaSaathi is deployed as a Python web service on Render.
+
+**Live application:**
+
+https://nyayasaathi-ai-lawyer.onrender.com
+
+### Render Configuration
+
+| Setting | Configuration |
+|---|---|
+| Service type | Web Service |
+| Runtime | Python 3 |
+| Branch | `main` |
+| Build command | `pip install -r requirements.txt` |
+| Root directory | Repository root |
+| Health check path | `/_stcore/health` |
+| Production provider | Gemini |
+| Hosting | Render free-tier web service |
+
+**Start Command:**
+
+```bash
+streamlit run app.py --server.address=0.0.0.0 --server.port=$PORT --server.headless=true
+```
+
+### Required Render Environment Variables
+
+Configure these in the Render dashboard:
+
+```dotenv
+GEMINI_API_KEY=your_actual_gemini_key
+GEMINI_MODEL=gemini-3.5-flash-lite
+
+GROQ_API_KEY=your_actual_groq_key
+GROQ_MODEL=whisper-large-v3-turbo
+
+APP_MODE=production
+LLM_PROVIDER=gemini
+```
+
+The values of `GEMINI_API_KEY` and `GROQ_API_KEY` must remain private.
+
+Render deploys changes from the connected GitHub repository. With automatic deployment enabled, new commits to the configured branch can trigger a redeployment.
+
+### Free-Tier Limitations
+
+- The application may take time to start after inactivity.
+- Available memory and compute resources are limited.
+- Gemini and Groq have independent API quotas.
+- Free-tier availability can change.
+- Performance may vary with provider traffic and hosting conditions.
+- API failures can temporarily prevent live conversations or transcription.
+
+The application does not silently replace failed live AI requests with simulated answers.
+
+---
+
+## 📁 Project Structure
+
+```text
+NyayaSaathi-AI-Lawyer/
+│
+├── app.py                     # Streamlit application entry point
+├── nyayasaathi/
+│   ├── config.py              # Application configuration
+│   ├── models.py              # Case and response models
+│   ├── conversation.py        # Conversation workflow
+│   ├── extraction.py          # Fact extraction and validation
+│   ├── retrieval.py           # Legal-source retrieval
+│   ├── safety.py              # Scope and safety checks
+│   ├── drafting.py            # Editable document generation
+│   ├── speech.py              # Groq speech transcription
+│   └── llm/                   # Provider-independent LLM integration
+│
+├── sources/
+│   ├── catalogue.json         # Curated source records
+│   └── README.md              # Source documentation
+│
+├── evaluation/
+│   ├── test_cases/            # Fictional test scenarios
+│   ├── raw_outputs/           # Recorded evaluation outputs
+│   ├── run.py                 # Evaluation runner
+│   └── run_speech.py          # Speech evaluation runner
+│
+├── tests/                     # Automated test suite
+├── scripts/                   # Supporting development scripts
+├── deployment/                # Additional deployment documentation
+├── .streamlit/                # Streamlit configuration
+├── requirements.txt           # Application dependencies
+├── requirements-dev.txt       # Development dependencies
+├── pyproject.toml             # Python project configuration
+├── render.yaml                # Render deployment configuration
+├── Dockerfile                 # Optional Docker deployment support
+├── .dockerignore              # Docker build exclusions
+├── .gitignore                 # Git exclusions
+├── .env.example               # Environment-variable template
+├── ARCHITECTURE.md            # Technical architecture
+├── PROJECT_REQUIREMENTS.md    # Requirements and MVP scope
+├── IMPLEMENTATION_PLAN.md     # Implementation roadmap
+├── AGENTS.md                  # Development-agent instructions
+└── README.md
+```
+
+---
+
+## ⚠️ Known Limitations
+
+NyayaSaathi is a working prototype, not a production-grade legal-advice service.
+
+Current limitations include:
+
+1. **Restricted legal coverage:** Only consumer complaints and rental security-deposit disputes are supported.
+
+2. **AI extraction uncertainty:** Gemini can occasionally omit, paraphrase, or incorrectly structure case facts. The application validates proposed facts and asks for clarification when needed.
+
+3. **Source coverage:** The curated catalogue is limited and does not represent a complete or continuously updated Indian-law database.
+
+4. **State-specific rental laws:** Detailed statutory entitlements cannot be assumed without verified jurisdiction-specific sources.
+
+5. **Speech recognition errors:** Hindi and Hinglish transcription may contain mistakes, making transcript review essential.
+
+6. **Session persistence:** Case context is maintained primarily within the current Streamlit session and may be lost after a refresh or reset.
+
+7. **Document format:** The supported download workflow focuses on editable text documents rather than automatically filed legal notices.
+
+8. **External dependencies:** Gemini, Groq, and Render availability affect application performance.
+
+9. **Legal reliability:** Retrieved information, extracted facts, and generated drafts must be reviewed. The system cannot guarantee legal correctness, eligibility, remedies, or outcomes.
+
+---
+
+## 🔮 Future Improvements
+
+Possible future developments include:
+
+- Broader coverage of verified Indian legal resources.
+- Improved state-specific legal retrieval.
+- More robust Hindi and Hinglish transcription.
+- Multilingual legal-document drafting.
+- Downloadable PDF documents.
+- Secure case-saving functionality with appropriate privacy controls.
+- Improved source-refresh and verification mechanisms.
+- Expanded evaluation datasets.
+- Human-lawyer referral workflows.
+- Accessibility improvements for users with limited legal or digital literacy.
+
+These features are not represented as implemented functionality in the current prototype.
+
+---
+
+## 🧠 Development Approach
+
+NyayaSaathi was built with the assistance of AI coding tools, including **ChatGPT Codex**, for implementation, debugging, testing, and documentation.
+
+The project emphasizes:
+
+- A narrowly defined and achievable MVP.
+- Separation of AI reasoning from deterministic checks.
+- Transparent legal-source grounding.
+- Explicit fact validation.
+- User control over generated documents.
+- Genuine testing with synthetic cases.
+- Honest reporting of failures and limitations.
+- Replaceable AI model integration.
+
+A notable development challenge involved Gemini returning paraphrased or malformed structured facts. Early versions sometimes rejected an entire response because one proposed fact failed provenance validation.
+
+The extraction pipeline was improved to validate facts independently, retain supported information, quarantine invalid fields, and request clarification instead of accepting unsupported details or discarding an otherwise useful response.
+
+This experience informed the project's conservative legal-assistance design.
+
+---
+
+## 📄 Assignment Context
+
+**Company:** KukuFM
+**Role:** AI Generalist
+**Selected Problem:** Problem 2 — Build an AI Lawyer
+**Project:** NyayaSaathi
+
+The submission focuses on demonstrating a practical AI-powered solution with clearly defined coverage, grounded information, multilingual access, editable outputs, testing evidence, and transparent limitations.
+
+---
+
+## 🔗 Important Links
+
+| Resource | Link |
+|---|---|
+| **Live Application** | https://nyayasaathi-ai-lawyer.onrender.com |
+| **GitHub Repository** | https://github.com/vinit9021/NyayaSaathi-AI-Lawyer |
+| **Google AI Studio** | https://aistudio.google.com/ |
+| **Groq Console** | https://console.groq.com/ |
+| **Render** | https://render.com/ |
+| **Streamlit** | https://streamlit.io/ |
+| **National Consumer Helpline** | https://consumerhelpline.gov.in/ |
+| **NALSA** | https://nalsa.gov.in/ |
+
+---
+
+## ⚖️ Final Disclaimer
+
+NyayaSaathi provides AI-generated legal information and drafting assistance for a restricted set of everyday disputes in India.
+
+It is not a substitute for a licensed legal professional and does not establish an advocate-client relationship.
+
+The system does not guarantee the accuracy of every AI response, the applicability of every legal resource, or any particular legal outcome.
+
+For urgent, complex, or consequential legal matters, consult a qualified lawyer or the appropriate legal-services authority.
+
+---
+
+**NyayaSaathi — Making everyday legal information easier to understand, one conversation at a time.**
